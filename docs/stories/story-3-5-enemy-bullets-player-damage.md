@@ -2,7 +2,7 @@
 title: 'Enemy Bullets, Mech Hull Damage & Death'
 epic: '3'
 story_key: '3.5'
-forge_task_id: ''
+forge_task_id: 'cmwm5rpeh002nistvjcwdu4hm'
 priority: 'HIGH'
 story_points: 5
 status: 'ready-for-dev'
