@@ -2,7 +2,7 @@
 title: 'Project Scaffolding, Autoloads, EventBus & InputMap'
 epic: '1'
 story_key: '1.1'
-forge_task_id: ''
+forge_task_id: 'cmwm5mjjm0026istv3183v85z'
 priority: 'CRITICAL'
 story_points: 8
 status: 'ready-for-dev'
