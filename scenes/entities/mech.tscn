@@ -1,0 +1,39 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/mech.gd" id="1_mech"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(56, 72)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
+size = Vector2(60, 76)
+
+[node name="Mech" type="CharacterBody2D"]
+script = ExtResource("1_mech")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visual"]
+position = Vector2(0, -36)
+
+[node name="ChargeGlow" type="Sprite2D" parent="Visual"]
+visible = false
+position = Vector2(0, -36)
+
+[node name="Weapon" type="Node2D" parent="."]
+
+[node name="Muzzle" type="Marker2D" parent="Weapon"]
+position = Vector2(40, -20)
+
+[node name="Hitbox" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(0, -36)
+shape = SubResource("RectangleShape2D_hitbox")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
