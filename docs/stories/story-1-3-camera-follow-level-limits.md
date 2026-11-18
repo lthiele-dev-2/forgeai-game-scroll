@@ -40,4 +40,8 @@ As a player, I want the camera to follow the mech horizontally with smoothing wh
   - `set_bounds(rect)` stores `level_midline_y = rect.get_center().y` and writes `limit_left/right/top/bottom` from the level `Rect2` (call-down from the level).
   - `_physics_process(delta)` pins `camera.global_position.y = level_midline_y` after clamping → horizontal-only follow with smoothing on x.
   - Headless `godot --headless --check-only` + GUT run deferred to the `godot-verify` board column (no godot binary in this container).
-- **Completion Notes:** All ACs covered by `res://tests/test_camera_rig.gd` (smoothing flags, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline while mech moves vertically).
+ - **Completion Notes:** All ACs covered by `res://tests/test_camera_rig.gd` (smoothing flags, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline while mech moves vertically).
+ - **Verify Agent Record (godot-verify, attempt 2):**
+   - Environment probe: `which godot godot4` -> not found; `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; filesystem search (`find / -iname "*godot*"` excluding workspace) -> no Godot binary in container.
+   - GUT probe: `addons/gut/gut_cmdln.gd` does NOT exist in the repo (no `addons/` directory); `tests/` contains test_camera_rig.gd, test_events.gd, test_game_manager.gd, test_mech_movement.gd, test_object_pool.gd.
+   - Blocked: cannot run `godot --headless --check-only` or `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` without the engine binary and the GUT addon. Escalated via forge_ask_human (environment failure path).
