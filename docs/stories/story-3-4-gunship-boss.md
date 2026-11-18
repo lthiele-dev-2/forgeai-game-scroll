@@ -2,7 +2,7 @@
 title: 'Gunship & Boss Enemies with Phase State Machine'
 epic: '3'
 story_key: '3.4'
-forge_task_id: ''
+forge_task_id: 'cmwm5r65f002listvg1t6hv67'
 priority: 'MEDIUM'
 story_points: 8
 status: 'ready-for-dev'
