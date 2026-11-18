@@ -2,7 +2,7 @@
 title: 'Signature Move: Charge Shot (Hold / Charge / Release / Cooldown)'
 epic: '3'
 story_key: '3.2'
-forge_task_id: ''
+forge_task_id: 'cmwm5q7nh002histvfj79bw9b'
 priority: 'HIGH'
 story_points: 8
 status: 'ready-for-dev'
