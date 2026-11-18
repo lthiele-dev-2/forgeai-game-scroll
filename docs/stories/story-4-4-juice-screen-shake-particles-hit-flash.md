@@ -2,7 +2,7 @@
 title: 'Juice: Screen Shake, Explosions, Hit-Flash & Charge Glow'
 epic: '4'
 story_key: '4.4'
-forge_task_id: ''
+forge_task_id: 'cmwm5u7z3002wistvwsba2gb6'
 priority: 'MEDIUM'
 story_points: 5
 status: 'ready-for-dev'
