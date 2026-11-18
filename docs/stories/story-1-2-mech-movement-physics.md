@@ -5,9 +5,9 @@ story_key: '1.2'
 forge_task_id: 'cmwm5n3nv0027istv8j93vwz6'
 priority: 'HIGH'
 story_points: 8
-status: 'ready-for-dev'
+status: 'in-progress'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: '8ea0236cd6e278f4e2ce6c5a098f9b96330a5383'
 ---
 
 # Story [1.2]: Mech Scene & Heavy/Floaty Movement Physics
@@ -31,12 +31,17 @@ As a player, I want the mech to strafe in 2D with a heavy, deliberate feel — s
 - `res://tests/test_mech_movement.gd` — GUT tests: ramp-to-max-speed, release-lag decay, gravity integration, diagonal strafe, bounds clamp
 
 ## Tasks & Subtasks
-- [ ] `res://scenes/entities/mech.tscn` — build the node tree with placeholder shapes/sprites
-- [ ] `res://scripts/entities/mech.gd` — implement `_physics_process(delta)` movement with heavy/floaty parameters
-- [ ] Bounds clamping against the level `Rect2` provided by the level scene
-- [ ] `res://tests/test_mech_movement.gd` — numeric GUT tests for all four movement behaviors
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `res://scenes/entities/mech.tscn` — build the node tree with placeholder shapes/sprites
+- [x] `res://scripts/entities/mech.gd` — implement `_physics_process(delta)` movement with heavy/floaty parameters
+- [x] Bounds clamping against the level `Rect2` provided by the level scene
+- [x] `res://tests/test_mech_movement.gd` — numeric GUT tests for all four movement behaviors
+- [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to `godot-verify` board column; no godot binary or `addons/gut` in this container, same as story 1.1)
 
 ## Dev Agent Record
 - **Debug Log:**
+  - 2026-11-18: baseline_commit 8ea0236cd6e278f4e2ce6c5a098f9b96330a5383 recorded; story resolved via `forge_get_task` description; implemented `scripts/entities/mech.gd`, `scenes/entities/mech.tscn`, `tests/test_mech_movement.gd` on taskBranch `feature/init/1-2-mech-scene-heavy-floaty-movement-physics-cmwm5n3n`.
 - **Completion Notes:**
+  - All motion confined to `_physics_process(delta)`: per-axis `move_toward` with `acceleration * delta` while input is held and `deceleration * delta` lag on release; `gravity * delta` added to `velocity.y` while airborne (`not is_on_floor()`); `move_and_slide()`; `position` clamped to `bounds: Rect2` after the slide. Tuning `@export`ed: `max_speed` 420, `acceleration` 1400, `deceleration` 650, `gravity` 2400, `bounds`; `set_bounds(rect)` is the call-down API the level uses.
+  - `mech.tscn` matches architecture §3.3: `Mech (CharacterBody2D)` with `CollisionShape2D`, `Visual (Node2D)` containing `AnimatedSprite2D` + hidden `ChargeGlow`, `Weapon (Node2D)` with `Muzzle (Marker2D)`, `Hitbox (Area2D)` with its own shape, and `Camera2D` (`position_smoothing_enabled`).
+  - `tests/test_mech_movement.gd` verifies scene hierarchy, `@export` presence, ramp-to-max-speed, release deceleration lag, gravity integration, independent diagonal axes, and min/max bounds clamping numerically with fixed `delta = 1/60`, using `Input.action_press/release` and `set_physics_process(false)` for deterministic manual ticks.
+  - Headless `godot --headless --check-only` and the GUT runner could not execute here (no godot binary, no `addons/gut/` addon in the container); runtime verification is owed to the `godot-verify` column.
