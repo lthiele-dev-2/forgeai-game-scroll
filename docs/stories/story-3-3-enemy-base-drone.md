@@ -2,7 +2,7 @@
 title: 'Enemy Base Script & Drone Enemy'
 epic: '3'
 story_key: '3.3'
-forge_task_id: ''
+forge_task_id: 'cmwm5qo5p002jistvcfhk5z0t'
 priority: 'HIGH'
 story_points: 5
 status: 'ready-for-dev'
