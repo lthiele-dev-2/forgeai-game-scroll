@@ -2,7 +2,7 @@
 title: 'Score System: Kill, Wave-Clear & Charge Multi-Kill Bonuses'
 epic: '3'
 story_key: '3.6'
-forge_task_id: ''
+forge_task_id: 'cmwm5s57t002pistvgugjwcpx'
 priority: 'MEDIUM'
 story_points: 3
 status: 'ready-for-dev'
