@@ -2,7 +2,7 @@
 title: 'Weapon: Continuous Fire & Pooled Player Shots'
 epic: '3'
 story_key: '3.1'
-forge_task_id: ''
+forge_task_id: 'cmwm5ppl9002gistvndcu3iuw'
 priority: 'HIGH'
 story_points: 5
 status: 'ready-for-dev'
