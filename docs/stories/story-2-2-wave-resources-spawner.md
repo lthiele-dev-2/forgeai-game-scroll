@@ -2,7 +2,7 @@
 title: 'Wave Data Resources & WaveSpawner'
 epic: '2'
 story_key: '2.2'
-forge_task_id: ''
+forge_task_id: 'cmwm5omym002cistvxds9m2d8'
 priority: 'HIGH'
 story_points: 8
 status: 'ready-for-dev'
