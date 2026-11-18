@@ -2,7 +2,7 @@
 title: 'GameManager State Machine & Win/Lose Flow'
 epic: '2'
 story_key: '2.3'
-forge_task_id: ''
+forge_task_id: 'cmwm5p5wk002eistvvy4pdqa3'
 priority: 'CRITICAL'
 story_points: 8
 status: 'ready-for-dev'
