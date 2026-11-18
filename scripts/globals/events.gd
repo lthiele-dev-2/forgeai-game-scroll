@@ -1,0 +1,16 @@
+extends Node
+
+signal game_state_changed(new_state: int)
+signal hull_changed(current: int, maximum: int)
+signal player_died()
+signal player_hit(damage: int, pos: Vector2)
+signal shot_fired(muzzle_pos: Vector2)
+signal charge_changed(level: float)
+signal charge_fired(level: float)
+signal enemy_spawned(enemy_type: String)
+signal enemy_destroyed(enemy_type: String, pos: Vector2, score_value: int)
+signal wave_started(n: int)
+signal wave_cleared(n: int)
+signal score_changed(new_score: int)
+signal victory()
+signal game_over()
