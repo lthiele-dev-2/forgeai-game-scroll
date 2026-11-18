@@ -49,4 +49,5 @@ As a developer, I want the Godot 4.x project skeleton with registered Autoloads,
 - **Completion Notes:**
   - InputMap: move_* bound to WASD + arrows + gamepad left stick; shoot/charge_shot share Space + gamepad A (hold-threshold share per GDD §2); pause = Esc + Start.
   - Events declares exactly the 14 signals from architecture §4.1; GameManager initial state TITLE, change_state() emits Events.game_state_changed.
-  - Headless godot binary is absent in this container; syntax/GUT execution belongs to the godot-verify column.
+   - Headless godot binary is absent in this container; syntax/GUT execution belongs to the godot-verify column.
+   - 2026-11-18 godot-verify (attempt 2): probed `godot --version` -> `godot: command not found`; deep filesystem search (`find / -iname 'godot*' -type f`) found no Godot 4.x binary in the container; `addons/gut/gut_cmdln.gd` also absent (no `addons/` dir) while `tests/test_events.gd`, `tests/test_game_manager.gd`, `tests/test_object_pool.gd` exist. Headless `godot --headless --check-only` and the GUT runner cannot execute here; escalated to human for static-fallback authorization.
