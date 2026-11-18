@@ -5,9 +5,9 @@ story_key: '1.1'
 forge_task_id: 'cmwm5mjjm0026istv3183v85z'
 priority: 'CRITICAL'
 story_points: 8
-status: 'ready-for-dev'
+status: 'in-progress'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: '71249ddd60b56e33bc2af23c9fb395001d25a1ba'
 ---
 
 # Story [1.1]: Project Scaffolding, Autoloads, EventBus & InputMap
@@ -34,15 +34,19 @@ As a developer, I want the Godot 4.x project skeleton with registered Autoloads,
 - `res://tests/test_events.gd`, `res://tests/test_game_manager.gd`, `res://tests/test_object_pool.gd` — GUT tests
 
 ## Tasks & Subtasks
-- [ ] `project.godot` — autoload registration, InputMap actions, display/renderer settings from `docs/project-context.md`
-- [ ] `res://scripts/globals/events.gd` — implement the full signal catalog with static typing
-- [ ] `res://scripts/globals/game_manager.gd` — implement state enum, `change_state()`, `Events.game_state_changed` emission
-- [ ] `res://scripts/globals/audio_manager.gd` — skeleton with bus layout and pool fields
-- [ ] `res://scenes/main.tscn` — build the `Main / World / UI(HUD, MenuLayer)` tree
-- [ ] `res://scripts/utils/object_pool.gd` — implement generic pooling
-- [ ] `res://tests/` — GUT tests for signal roundtrip, initial state, pool acquire/release
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `project.godot` — autoload registration, InputMap actions, display/renderer settings from `docs/project-context.md`
+- [x] `res://scripts/globals/events.gd` — implement the full signal catalog with static typing
+- [x] `res://scripts/globals/game_manager.gd` — implement state enum, `change_state()`, `Events.game_state_changed` emission
+- [x] `res://scripts/globals/audio_manager.gd` — skeleton with bus layout and pool fields
+- [x] `res://scenes/main.tscn` — build the `Main / World / UI(HUD, MenuLayer)` tree
+- [x] `res://scripts/utils/object_pool.gd` — implement generic pooling
+- [x] `res://tests/` — GUT tests for signal roundtrip, initial state, pool acquire/release
+- [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to `godot-verify` board column; no godot binary in this container)
 
 ## Dev Agent Record
 - **Debug Log:**
+  - 2026-11-18: baseline_commit 71249ddd60b56e33bc2af23c9fb395001d25a1ba recorded; implemented project.godot, autoloads, main.tscn, object_pool.gd, and GUT tests on taskBranch.
 - **Completion Notes:**
+  - InputMap: move_* bound to WASD + arrows + gamepad left stick; shoot/charge_shot share Space + gamepad A (hold-threshold share per GDD §2); pause = Esc + Start.
+  - Events declares exactly the 14 signals from architecture §4.1; GameManager initial state TITLE, change_state() emits Events.game_state_changed.
+  - Headless godot binary is absent in this container; syntax/GUT execution belongs to the godot-verify column.
