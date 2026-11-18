@@ -2,7 +2,7 @@
 title: 'Camera2D Follow Rig & Level Limit Clamping'
 epic: '1'
 story_key: '1.3'
-forge_task_id: ''
+forge_task_id: 'cmwm5nni00029istv1h3u3a29'
 priority: 'MEDIUM'
 story_points: 3
 status: 'ready-for-dev'
