@@ -5,7 +5,7 @@ story_key: '3.5'
 forge_task_id: 'cmwm5rpeh002nistvjcwdu4hm'
 priority: 'HIGH'
 story_points: 5
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: '248d41359c0aa09f2338a0ced1df3198777b31f3'
 ---
@@ -38,7 +38,11 @@ As a player, I want enemy fire and contact to visibly drain my mech's hull integ
 
 ## Dev Agent Record
 - **Debug Log:**
-  - NOT EXECUTED (environment): `godot --headless --check-only` and the GUT runner `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` — no Godot 4.x binary exists in this container. Headless syntax check and the GUT suite (incl. `tests/test_damage.gd`) are owned by the `godot-verify` column on this committed diff.
+  - godot-verify (task cmwm5rpeh002nistvjcwdu4hm): no Godot binary in the container, so the official `Godot_v4.5-stable_linux.x86_64` release was fetched to /tmp and used (GUT 9.6.1 requires Godot >= 4.4 for the `Logger` base class; project targets 4.3 features, 4.5 loads it cleanly). `godot --headless --import` registered 119 global classes with 0 parse errors; full project load `godot --headless --quit` exited 0 with 0 script errors.
+  - GUT suite `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`: first run 103/105 passing, exit 1. Two pre-existing failures inherited from story 3.4 (its verify column ran static-only, commit 17d3349, because the container had no binary): `test_boss_phases.gd::test_gunship_hit_and_run_standoff_then_burst_fire` (18 vs 15 bullets — gunship fired while between attack_range and preferred_distance) and `test_boss_phases.gd::test_final_wave_spawner_loads_real_boss_and_gunship_scenes` (boss starved behind 51 scaled gunships in the spawn queue). Both confirmed failing on `origin/feature/init/base` before repair.
+  - Repair attempt 1 (implementation only, no test weakened): `gunship.gd` now gates `hold_fire` on standoff distance (`absf(dx) <= preferred_distance`) instead of attack range; `wave_spawner.gd` `start_wave` enqueues per-type jobs round-robin so mixed waves interleave types and the boss is not starved. Re-run: **105/105 tests passing, 572 asserts, exit code 0** ("All tests passed!"). 2 orphan warnings remain (leaked pooled bullet node in test_damage teardown; non-fatal, does not affect exit code).
+- **Verification Record:**
+  - PASS — Godot 4.5.0.stable headless import + project load clean; GUT 9.6.1 suite over `res://tests` (13 scripts, 105 tests incl. `tests/test_damage.gd` damage formula / hull_changed / single player_died / bullet pooling): 105 passing, 0 failing, exit 0.
 - **Completion Notes:**
   - `scripts/entities/projectiles/enemy_bullet.gd` + `scenes/entities/projectiles/enemy_bullet.tscn` (`EnemyBullet`, Area2D, layer 8 / mask 1 so enemy hitboxes on layer 2 never friendly-fire and the mech Hitbox detects it): pooled bullet with the same 5-arg `fire(pos, dir, dmg, pool, bounds)` contract `EnemyWeapon` already calls; `@export speed`, moves `direction * speed * delta` in `_physics_process`, releases to the pool on `area_entered`, `max_lifetime` expiry, or leaving `level_bounds`; never `free()` mid-frame.
   - `scripts/entities/mech.gd`: `@export max_hull: int = 100`; `hull` starts at `max_hull` in `_ready` (initial `Events.hull_changed` emitted); `take_damage(d)` clamps hull at 0, emits `Events.hull_changed(hull, max_hull)` per hit, and at 0 emits `Events.player_died()` exactly once via the `is_alive` guard; Hitbox `area_entered`/`body_entered` wired in `_ready`, disconnected in `_exit_tree`, applying `base_damage * enemy_multiplier` (bullet `damage`/`enemy_multiplier`, enemy body/hitbox `contact_damage`/`enemy_multiplier`) and emitting `Events.player_hit(damage, pos)`; after death the mech ignores movement and fire input.

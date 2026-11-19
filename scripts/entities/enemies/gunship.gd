@@ -41,13 +41,12 @@ func _physics_process(delta: float) -> void:
 	if not is_alive:
 		return
 	var player: Node2D = _resolve_player()
-	var in_range: bool = player != null
+	var dx: float = 0.0
 	velocity.y = move_toward(velocity.y, 0.0, deceleration * delta)
 	if player != null:
-		var dx: float = player.global_position.x - global_position.x
+		dx = player.global_position.x - global_position.x
 		if absf(dx) > attack_range:
 			velocity.x = signf(dx) * move_speed
-			in_range = false
 		elif absf(dx) > preferred_distance:
 			velocity.x = signf(dx) * move_speed * 0.5
 		else:
@@ -60,7 +59,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, deceleration * delta)
 	move_and_slide()
-	if in_range and _weapon != null:
+	if player != null and absf(dx) <= preferred_distance and _weapon != null:
 		_weapon.hold_fire(delta)
 
 
