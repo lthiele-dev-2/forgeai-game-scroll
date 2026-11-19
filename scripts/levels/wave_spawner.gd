@@ -70,6 +70,7 @@ func start_wave(wave: WaveData) -> bool:
 	_spawn_timer = 0.0
 	_spawn_queue.clear()
 	var mult: float = wave_multiplier(wave.wave_number)
+	var per_type: Array[Array] = []
 	for enemy_type in wave.get_enemy_types():
 		var base_count: int = wave.get_count(enemy_type)
 		var scaled_count: int = int(round(base_count * mult)) if base_count > 0 else 0
@@ -78,8 +79,17 @@ func start_wave(wave: WaveData) -> bool:
 		var score: int = wave.get_score_value(enemy_type)
 		if score <= 0 and enemy_stats != null:
 			score = enemy_stats.get_base_score(enemy_type)
+		var jobs: Array = []
 		for i in range(scaled_count):
-			_spawn_queue.append({"type": enemy_type, "hp": hp, "fire_rate": fire_rate, "score": score})
+			jobs.append({"type": enemy_type, "hp": hp, "fire_rate": fire_rate, "score": score})
+		per_type.append(jobs)
+	var progressed: bool = true
+	while progressed:
+		progressed = false
+		for jobs in per_type:
+			if not jobs.is_empty():
+				_spawn_queue.append(jobs.pop_front())
+				progressed = true
 	Events.wave_started.emit(_current_wave)
 	return true
 
