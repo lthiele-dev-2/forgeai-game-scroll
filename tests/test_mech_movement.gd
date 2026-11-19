@@ -20,7 +20,8 @@ func after_each() -> void:
 	Input.action_release("move_up")
 	Input.action_release("move_down")
 	if is_instance_valid(mech):
-		mech.queue_free()
+		remove_child(mech)
+		mech.free()
 	mech = null
 
 
@@ -54,7 +55,7 @@ func test_tuning_params_are_exported() -> void:
 func test_ramp_to_max_speed_with_fixed_delta() -> void:
 	Input.action_press("move_right")
 	_tick()
-	assert_eq(mech.velocity.x, move_toward(0.0, mech.max_speed, mech.acceleration * DELTA), "one tick ramps by acceleration*delta")
+	assert_almost_eq(mech.velocity.x, move_toward(0.0, mech.max_speed, mech.acceleration * DELTA), 0.001, "one tick ramps by acceleration*delta")
 	_tick(TICKS_TO_MAX)
 	assert_eq(mech.velocity.x, mech.max_speed, "velocity.x converges exactly to max_speed")
 
@@ -65,7 +66,7 @@ func test_release_deceleration_lag() -> void:
 	assert_eq(mech.velocity.x, mech.max_speed)
 	Input.action_release("move_right")
 	_tick()
-	assert_eq(mech.velocity.x, move_toward(mech.max_speed, 0.0, mech.deceleration * DELTA), "decays by deceleration*delta, not instantly")
+	assert_almost_eq(mech.velocity.x, move_toward(mech.max_speed, 0.0, mech.deceleration * DELTA), 0.001, "decays by deceleration*delta, not instantly")
 	assert_gt(mech.velocity.x, 0.0, "floaty: still moving after input release")
 	assert_lt(mech.velocity.x, mech.max_speed)
 
@@ -80,9 +81,9 @@ func test_diagonal_axes_integrate_independently() -> void:
 	Input.action_press("move_right")
 	Input.action_press("move_down")
 	_tick()
-	assert_eq(mech.velocity.x, move_toward(0.0, mech.max_speed, mech.acceleration * DELTA), "x ramps independently")
+	assert_almost_eq(mech.velocity.x, move_toward(0.0, mech.max_speed, mech.acceleration * DELTA), 0.001, "x ramps independently")
 	var expected_y: float = move_toward(0.0, mech.max_speed, mech.acceleration * DELTA) + mech.gravity * DELTA
-	assert_eq(mech.velocity.y, expected_y, "y ramps independently of x, plus gravity while airborne")
+	assert_almost_eq(mech.velocity.y, expected_y, 0.001, "y ramps independently of x, plus gravity while airborne")
 	_tick(TICKS_TO_MAX)
 	assert_eq(mech.velocity.x, mech.max_speed)
 

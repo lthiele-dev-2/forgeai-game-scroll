@@ -5,9 +5,9 @@ story_key: '1.3'
 forge_task_id: 'cmwm5nni00029istv1h3u3a29'
 priority: 'MEDIUM'
 story_points: 3
-status: 'ready-for-dev'
+status: 'done'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: '723df4613d285b870369b8e80710ca3add4621f3'
 ---
 
 # Story [1.3]: Camera2D Follow Rig & Level Limit Clamping
@@ -28,11 +28,37 @@ As a player, I want the camera to follow the mech horizontally with smoothing wh
 - `res://tests/test_camera_rig.gd` — GUT test verifying limits and smoothing flags
 
 ## Tasks & Subtasks
-- [ ] `res://scenes/entities/mech.tscn` — add/configure `Camera2D` with `position_smoothing_enabled = true`
-- [ ] `res://scripts/entities/mech.gd` — implement bounds-to-camera-limit wiring
-- [ ] `res://tests/test_camera_rig.gd` — GUT test for limits
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `res://scenes/entities/mech.tscn` — add/configure `Camera2D` with `position_smoothing_enabled = true`
+- [x] `res://scripts/entities/mech.gd` — implement bounds-to-camera-limit wiring
+- [x] `res://tests/test_camera_rig.gd` — GUT test for limits
+- [x] Verify headless with `godot --headless --check-only` and run GUT
 
 ## Dev Agent Record
 - **Debug Log:**
-- **Completion Notes:**
+  - Camera2D child of Mech configured in `mech.tscn` with `position_smoothing_enabled = true`, `position_smoothing_speed = 8.0`, `zoom = Vector2(1, 1)`.
+  - `mech.gd`: `@onready var camera: Camera2D`, `@export var camera_smoothing_speed`, `@export var camera_zoom`; `_ready()` applies smoothing/zoom and pushes `bounds` down to camera limits via `set_bounds()`.
+  - `set_bounds(rect)` stores `level_midline_y = rect.get_center().y` and writes `limit_left/right/top/bottom` from the level `Rect2` (call-down from the level).
+  - `_physics_process(delta)` pins `camera.global_position.y = level_midline_y` after clamping → horizontal-only follow with smoothing on x.
+  - Headless `godot --headless --check-only` + GUT run deferred to the `godot-verify` board column (no godot binary in this container).
+ - **Completion Notes:** All ACs covered by `res://tests/test_camera_rig.gd` (smoothing flags, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline while mech moves vertically).
+  - **Verify Agent Record (godot-verify, attempt 2):**
+    - Environment probe: `which godot godot4` -> not found; `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; filesystem search (`find / -iname "*godot*"` excluding workspace) -> no Godot binary in container.
+    - GUT probe: `addons/gut/gut_cmdln.gd` does NOT exist in the repo (no `addons/` directory); `tests/` contains test_camera_rig.gd, test_events.gd, test_game_manager.gd, test_mech_movement.gd, test_object_pool.gd.
+    - Blocked: cannot run `godot --headless --check-only` or `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` without the engine binary and the GUT addon. Escalated via forge_ask_human (environment failure path).
+  - **Verify Agent Record (godot-verify, attempt 3):**
+    - Human resume answer recorded: godot binary path `C:\dev\apps\godot\4.7.2` (Windows path; not present in this Linux container — verified by filesystem search). Repair: provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary (same 4.7.2 version the human pointed at) and installed the GUT `v9.6.1` addon into `addons/gut/` (was missing from the repo).
+    - Headless editor import (`godot --headless --editor --quit`) built `.godot/global_script_class_cache.cfg` (registers `GutTest`); project load `godot --headless --quit` -> exit 0, no scene parse errors.
+    - Per-script `godot --headless --check-only -s res://...` over `scripts/` + `tests/`: only single-script-mode artifacts remain (autoload `Events` not instanced under `-s`; GUT font import skipped without libfontconfig) — both compile cleanly in full-project context, proven by the GUT run below.
+    - GUT suite `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` -> **24/24 tests passed, 75 asserts, exit 0** (first run: 20/24; 4 pre-existing failures from stories 1.1/1.2, repaired within budget, no assertion weakened):
+      - `tests/test_events.gd`: count script-declared signals via `Events.get_script().get_script_signal_list()` (14) instead of `get_signal_list()` which includes 13 inherited Node signals.
+      - `tests/test_mech_movement.gd`: `after_each` now removes and `free()`s the mech immediately (deferred `queue_free` left it overlapping the next test's mech at (0,0), zeroing `velocity.x` on the first tick); float comparisons use `assert_almost_eq(..., 0.001)` to absorb float32-vs-float64 rounding (e.g. 23.3333339691162 vs 23.3333333333333).
+    - All 5 `test_camera_rig.gd` tests (this story's ACs: smoothing enabled/tuned, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline under vertical motion) pass.
+    - Result: headless Godot 4.7.2 syntax/scene check + GUT suite PASS on `taskBranch`; status set to `in-review`.
+  - **Review Agent Record (bmgd-code-review):**
+    - Diff inspected from `baseline_commit` 723df46 to HEAD on `taskBranch` (3 commits: feat/story, test/verify x2).
+    - **Lens 1 — Physics & Frame Budget:** All velocity integration in `_physics_process(delta)` scaled by `delta` (mech.gd:41-45). Camera y-pin `camera.global_position.y = level_midline_y` (mech.gd:52) is a per-frame position write, not velocity motion — no delta needed; Camera2D node `global_position` is unsmoothed (smoothing affects render transform only), so the pin is exact. No per-frame allocations on the hot path. PASS.
+    - **Lens 2 — Node Lifecycle & Memory:** `@onready var camera: Camera2D = $Camera2D` with static type; `@export` vars typed. No dynamic nodes created in story code. Tests use `queue_free()` in `after_each` (test_camera_rig.gd:18). `set_bounds()` null-guards camera. PASS.
+    - **Lens 3 — Signal Decoupling:** `set_bounds(rect)` called down from level to mech (call-down); mech configures its child Camera2D directly. No `get_parent()`/`get_node()` chains across the tree. No cross-scene signals needed for this story. PASS.
+    - **Lens 4 — AC & GUT Coverage:** All 5 ACs mapped to tests in `test_camera_rig.gd` (5/5 camera tests passed in GUT 24/24 run): smoothing enabled+tuned (test 1), zoom 1.0 at 1920x1080 (test 2), limits == level Rect2 (test 3), horizontal follow + y pinned (test 4), y stays pinned under vertical motion (test 5). PASS.
+    - **Findings:** No defects requiring auto-patch. Observations: default `bounds` export Rect2(0,0,1920,1080) applied in `_ready()` before level calls `set_bounds()` — correct bootstrap; `.uid` files and `addons/gut/` added by verify column are infrastructure, not story code; `test_mech_movement.gd` uses `free()` in test `after_each` (safe — synchronous test cleanup, not mid-frame gameplay). Zero repair attempts used.
+    - Result: review PASS, status set to `done`.
