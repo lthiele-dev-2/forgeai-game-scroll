@@ -46,6 +46,9 @@ func spawn_wave(n: int) -> bool:
 	if _wave_active or _cleared_waves.get(n, false):
 		return false
 	var path: String = WAVE_RESOURCE_FORMAT % n
+	if not ResourceLoader.exists(path):
+		push_warning("WaveSpawner: wave resource missing: %s" % path)
+		return false
 	var wave: WaveData = load(path) as WaveData
 	if wave == null:
 		push_warning("WaveSpawner: wave resource missing or invalid: %s" % path)

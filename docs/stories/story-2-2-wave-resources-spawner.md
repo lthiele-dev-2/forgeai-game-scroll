@@ -5,7 +5,7 @@ story_key: '2.2'
 forge_task_id: 'cmwm5omym002cistvxds9m2d8'
 priority: 'HIGH'
 story_points: 8
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: '893fc918d7409d5a96ca45f4a2a2fa87ae6ade22'
 ---
@@ -40,7 +40,13 @@ As a player, I want escalating enemy waves that spawn sequentially along the lev
 - **Verify Environment Failure (godot-verify, attempt 2):**
   - `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; full filesystem search (`find / -xdev -iname "*godot*"`) found no Godot 4.x binary in the container; no `## Human Interaction Resume` authorizing static fallback was present.
   - GUT framework present (`addons/gut/gut_cmdln.gd`) and tests present (`tests/test_wave_spawner.gd` etc.), but cannot be executed without the `godot` binary.
-  - `forge_ask_human` called on task cmwm5omym002cistvxds9m2d8: proceed with static GDScript/scene verification, or wait for environment fix.
+   - `forge_ask_human` called on task cmwm5omym002cistvxds9m2d8: proceed with static GDScript/scene verification, or wait for environment fix.
+- **Verify Environment Resolution (godot-verify, attempt 3):**
+   - Human resume answer: godot binary is `C:\dev\apps\godot\4.7.2` (Windows host path). That path does not exist in this Linux container (probed directly, plus full-filesystem search); provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary instead and recorded it here per the resume rule. `repair_attempts` reset to 0.
+   - `godot --version` -> `4.7.2.stable.official.ed1daf0bf`; `godot --headless --import` -> exit 0 (all `.tscn`/`.tres` parse cleanly).
+   - `godot --headless --quit` (main scene smoke load) -> exit 0, no script errors. Note: per-script `--check-only -s` outside the scene tree fails on autoload identifiers (`Events`); in-project compile via GUT/scene load is the authoritative check.
+   - GUT (`godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`): 41/41 tests passed, 238 asserts, exit 0 after 1 repair attempt (see below).
+   - **Repair attempt 1:** `test_spawn_wave_rejects_invalid_and_missing_waves` failed only because `load()` on missing `wave_99.tres` logs engine errors that GUT counts as unexpected. Fixed in `scripts/levels/wave_spawner.gd` `spawn_wave()` by guarding with `ResourceLoader.exists(path)` before `load()` — no test assertion weakened. Re-run: all 41 tests pass, exit 0.
 - **Debug Log:**
   - `WaveSpawner` is generic over `WaveData`/`EnemyStats`; enemy `PackedScene`s resolve lazily from `enemy_stats.tres` scene paths, with `scene_overrides` as the test seam (enemy scenes land in Epic 3 per readiness-report observation 1).
   - Alive counting: `_alive` array pruned by `is_instance_valid` in `_physics_process`, plus one pop per `Events.enemy_destroyed` so pool-released enemies count as destroyed; `wave_cleared` guarded by `_cleared_emitted` + `_cleared_waves`.
