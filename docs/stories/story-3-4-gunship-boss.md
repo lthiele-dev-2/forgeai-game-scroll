@@ -5,7 +5,7 @@ story_key: '3.4'
 forge_task_id: 'cmwm5r65f002listvg1t6hv67'
 priority: 'MEDIUM'
 story_points: 8
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: 'c860d32fba19dd7f380a0817a6321dae97e34c3c'
 ---
@@ -38,6 +38,10 @@ As a player, I want tougher enemy types — a fast gunship and a multi-phase bos
 ## Dev Agent Record
 - **Debug Log:**
   - No Godot binary in the dev container; headless check + GUT run happen in the `godot-verify` column.
+  - godot-verify environment probe (task cmwm5r65f002listvg1t6hv67, 2026-11-19): `which godot godot4` → not found; `godot --version` → `/usr/bin/bash: line 1: godot: command not found`; filesystem-wide `find / -iname "*godot*" -type f` (excluding workspace/skills) → no engine binary. `addons/gut/gut_cmdln.gd` and `tests/` (13 test files incl. `test_boss_phases.gd`) are present. Engine-based verification impossible in this container; prior human answer for task cmwm5qo5p002jistvcfhk5z0t (recorded in story-3-3 Dev Agent Record) established that no Godot binary exists here and authorized the static GDScript/scene verification fallback. `repair_attempts` = 0 (no failing command to repair).
+  - Static verification fallback (godot-verify, task cmwm5r65f002listvg1t6hv67, 2026-11-19): engine-free checker over all 32 non-addon `.gd` files, 12 non-addon `.tscn` files, 6 `.tres` files — bracket balance (string/comment aware), tab-only indentation, `class_name` uniqueness (15 names), `extends "res://..."` target existence, named-class `extends` resolution (project class_names + GUT `GutTest` + engine builtins), `preload`/`load`/`ResourceLoader.exists` `res://` targets, `.tscn`/`.tres` `ext_resource` paths and `ExtResource`/`SubResource` id resolution, node parent ordering, `load_steps` sufficiency, `project.godot` autoload script paths. RESULT: PASS — 0 errors, 0 warnings. (`res://scenes/entities/projectiles/enemy_bullet.tscn` is referenced only via a `const` string guarded by `ResourceLoader.exists` in gunship/boss `_ready`; it lands in story 3.5.)
+  - Story AC cross-check (static): gunship.gd `extends Enemy`, move_speed 380 > drone 240, attack_range 620 > drone 420, preferred_distance 480 > drone attack_range, gunship.tscn Weapon burst_count=3 spread_degrees=24.0, enemy_stats.tres gunship fire_rate 2.0 > drone 1.2 with wave multipliers applied in `setup_wave`; boss.tscn has BossPhases(Node) child with hp_thresholds [1.0, 0.5] and boss.gd updates phase at `hp / max_hp` in `take_damage` before the death check; charge_blast.gd applies raw `blast_damage` when `is_boss` else 100x destroy multiplier, boss 500 base HP means regular 10-damage shots cannot one-shot; `Events.enemy_destroyed('gunship'|'boss', pos, score)` fires only in `_die()` at 0 HP then pool-release/`queue_free()`; wave_05.tres (final wave) spawns 1 boss + 6 gunships; `tests/test_boss_phases.gd` covers all five ACs including phase transitions at 52%/48%/exactly-50% HP.
+  - NOT EXECUTED (environment): `godot --headless --check-only` and the GUT runner `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` — no Godot 4.x binary exists in this container. Static parse/resource verification is recorded as the verification result for this column, per the authorized fallback.
 - **Completion Notes:**
   - `enemy_weapon.gd` (EnemyWeapon): new `@export burst_count` (default 1) and `@export spread_degrees` (default 0) — `_fire()` now spawns a centered spread/burst of `Vector2.LEFT.rotated(offset)` bullets; defaults keep the drone's single leftward bullet unchanged.
   - `gunship.gd` (Gunship extends Enemy): `move_speed` 380 > drone 240, `attack_range` 620 and `preferred_distance` 480 keep more standoff than the drone; approaches at full speed outside `attack_range`, closes at half speed down to `preferred_distance`, then strafes vertically (hit-and-run) while firing at the wave-scaled `fire_rate`; `gunship.tscn` Weapon runs a 3-round 24° spread burst.
