@@ -36,6 +36,7 @@ As a player, I want the first enemy type — a drone that approaches and fires a
 ## Dev Agent Record
 - **Debug Log:**
   - No Godot binary in the dev container; headless check + GUT run happen in the `godot-verify` column.
+  - godot-verify environment probe (task cmwm5qo5p002jistvcfhk5z0t): `which godot godot4` → not found; `godot --version` → `/usr/bin/bash: line 1: godot: command not found`; filesystem-wide `find / -iname "*godot*" -type f` (excluding /session/workspace, skills, node_modules) → no binary. `addons/gut/gut_cmdln.gd` and `tests/` are present. Environment failure: no Godot runtime available for `godot --headless --check-only` or the GUT runner — escalated via forge_ask_human (static fallback vs. environment fix).
 - **Completion Notes:**
   - `enemy.gd` (Enemy, CharacterBody2D): `hp`/`max_hp`, `take_damage(amount)`, `setup_wave(type, hp, fire_rate, score)` for the WaveSpawner, `enemy_multiplier` for PlayerShot's damage call, Hitbox `area_entered` wired in `_ready` (area `damage` property else `contact_damage`), death emits `Events.enemy_destroyed(enemy_type, global_position, score_value)` then `pool.release(self)` when a pool is set, else `queue_free()` — never `free()` mid-frame; death is idempotent via `is_alive`.
   - `enemy_weapon.gd` (EnemyWeapon, Node2D): pooled bullet firing at `fire_rate` toward `Vector2.LEFT` from `Muzzle`, `@export bullet_scene` (injectable; drone auto-loads `enemy_bullet.tscn` once story 3.5 lands it), active-bullet cap via `pool_size`, `bullet_fired` signal up.
