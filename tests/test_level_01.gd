@@ -71,7 +71,7 @@ func test_parallax_has_three_layers_scrolling_at_decreasing_rates() -> void:
 	var near: ParallaxLayer = background.get_node("Near")
 	assert_lt(far.motion_scale.x, mid.motion_scale.x, "far scrolls slower than mid")
 	assert_lt(mid.motion_scale.x, near.motion_scale.x, "mid scrolls slower than near")
-	assert_le(near.motion_scale.x, 1.0, "near layer must not scroll faster than the camera")
+	assert_lte(near.motion_scale.x, 1.0, "near layer must not scroll faster than the camera")
 
 
 func test_spawn_markers_positioned_along_level_length() -> void:

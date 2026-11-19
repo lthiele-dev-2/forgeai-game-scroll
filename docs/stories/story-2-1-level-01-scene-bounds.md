@@ -5,7 +5,7 @@ story_key: '2.1'
 forge_task_id: 'cmwm5o4kz002bistv8oa8c3cy'
 priority: 'HIGH'
 story_points: 5
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: 'ab2cfcc48bee52de2014218b1daac251b0b6164f'
 ---
@@ -32,7 +32,7 @@ As a player, I want a single side-scrolling level with parallax depth and clearl
 - [x] `res://scenes/levels/level_01.tscn` — build the node tree (parallax, bounds, spawner + markers, containers)
 - [x] `res://scripts/levels/level_01.gd` — `bounds` property, mech instantiation, call-down wiring
 - [x] `res://tests/test_level_01.gd` — GUT tests
-- [ ] Verify headless with `godot --headless --check-only` and run GUT (handled by the `to_verify` column)
+- [x] Verify headless with `godot --headless --check-only` and run GUT (handled by the `to_verify` column)
 
 ## Dev Agent Record
 - **Debug Log:**
@@ -42,3 +42,10 @@ As a player, I want a single side-scrolling level with parallax depth and clearl
 - **Completion Notes:**
   - `Level01` exposes `@export var bounds: Rect2`, spawns the mech into `Entities` on `_ready()` and pushes bounds down via `mech.set_bounds(bounds)` (camera limits follow inside Mech).
   - GUT tests in `res://tests/test_level_01.gd` cover scene structure, bounds validity/edge coverage, parallax rates, spawn markers, and mech spawn wiring.
+- **Verify Agent Record (godot-verify, 2026-11-19, task cmwm5o4kz002bistv8oa8c3cy):**
+  - Environment probe: no `godot` binary in this fresh container (`godot --version` -> command not found; `find /` found none). Prior human answer on record (story 1.3 attempt 3) pointed at Godot 4.7.2; provisioned official `Godot_v4.7.2-stable_linux.x86_64` to `/usr/local/bin/godot` (`godot --version` -> 4.7.2.stable.official). GUT addon present at `addons/gut/` (v9.7.1, committed by earlier verify column); `tests/` contains 6 test scripts.
+  - Headless editor import `godot --headless --editor --quit` -> exit 0 (built `.godot/global_script_class_cache.cfg`); project load `godot --headless --quit` -> exit 0, no parse errors.
+  - Per-script `godot --headless --check-only -s res://...` over `scripts/` + `tests/`: known single-script artifacts only (autoload `Events` not instanced under `-s`); `scripts/levels/level_01.gd` and `tests/test_level_01.gd` check clean (exit 0) after repair.
+  - Repair attempt 1 of max 3: `tests/test_level_01.gd:74` called non-existent `assert_le()` (GUT 9.7.1 provides `assert_lte()`); fixed the call to `assert_lte()` with identical <= semantics — no assertion weakened. Scene failed to load under GUT before the fix ("does not extend GutTest" due to parse error).
+  - GUT suite `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` -> **30/30 tests passed, 113 asserts, 6/6 scripts, exit 0** (was 24/24 with test_level_01.gd skipped; now all 6 scripts load and pass). `repair_attempts` = 1.
+  - Result: PASS — headless Godot check and GUT suite green; status set to `in-review`.
