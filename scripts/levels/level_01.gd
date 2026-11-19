@@ -24,6 +24,7 @@ func _exit_tree() -> void:
 func spawn_mech() -> Mech:
 	var mech: Mech = MECH_SCENE.instantiate()
 	mech.position = mech_spawn_position
+	mech.add_to_group("player")
 	entities.add_child(mech)
 	mech.set_bounds(bounds)
 	mech.set_projectiles_container(projectiles)

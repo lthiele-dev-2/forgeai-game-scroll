@@ -6,6 +6,7 @@ const WAVE_RESOURCE_FORMAT: String = "res://resources/waves/wave_%02d.tres"
 
 @export var enemy_stats: EnemyStats
 @export var entities_path: NodePath = ^"../Entities"
+@export var projectiles_path: NodePath = ^"../Projectiles"
 @export var max_alive: int = MAX_ALIVE_ENEMIES
 
 var scene_overrides: Dictionary = {}
@@ -160,6 +161,15 @@ func _spawn_one() -> void:
 	enemy.global_position = pos
 	if enemy.has_method("setup_wave"):
 		enemy.setup_wave(enemy_type, float(job["hp"]), float(job["fire_rate"]), int(job["score"]))
+	if enemy is Enemy:
+		enemy.pool = pool
+	var weapon: Node = enemy.get_node_or_null("Weapon")
+	if weapon != null and weapon.has_method("set_projectiles_container"):
+		var projectiles: Node = get_node_or_null(projectiles_path)
+		if projectiles != null:
+			weapon.call("set_projectiles_container", projectiles)
+		if _bounds.has_area():
+			weapon.call("set_level_bounds", _bounds)
 	_alive.append(enemy)
 	Events.enemy_spawned.emit(enemy_type)
 
