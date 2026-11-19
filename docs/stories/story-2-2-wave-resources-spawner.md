@@ -5,7 +5,7 @@ story_key: '2.2'
 forge_task_id: 'cmwm5omym002cistvxds9m2d8'
 priority: 'HIGH'
 story_points: 8
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: '893fc918d7409d5a96ca45f4a2a2fa87ae6ade22'
 ---
@@ -50,7 +50,14 @@ As a player, I want escalating enemy waves that spawn sequentially along the lev
 - **Debug Log:**
   - `WaveSpawner` is generic over `WaveData`/`EnemyStats`; enemy `PackedScene`s resolve lazily from `enemy_stats.tres` scene paths, with `scene_overrides` as the test seam (enemy scenes land in Epic 3 per readiness-report observation 1).
   - Alive counting: `_alive` array pruned by `is_instance_valid` in `_physics_process`, plus one pop per `Events.enemy_destroyed` so pool-released enemies count as destroyed; `wave_cleared` guarded by `_cleared_emitted` + `_cleared_waves`.
-- **Completion Notes:**
-  - `wave_multiplier(n) = 1 + 0.25*(n-1)` static; applied to count (rounded), HP, and fire rate; score falls back to `enemy_stats` when the wave resource omits it.
-  - Cap `max_alive` (~24 default) holds spawns in `_spawn_queue` until a slot frees.
-  - `level_01.tscn` WaveSpawner node now runs `wave_spawner.gd` with `enemy_stats.tres` assigned.
+ - **Completion Notes:**
+   - `wave_multiplier(n) = 1 + 0.25*(n-1)` static; applied to count (rounded), HP, and fire rate; score falls back to `enemy_stats` when the wave resource omits it.
+   - Cap `max_alive` (~24 default) holds spawns in `_spawn_queue` until a slot frees.
+   - `level_01.tscn` WaveSpawner node now runs `wave_spawner.gd` with `enemy_stats.tres` assigned.
+- **Adversarial Code Review (bmgd-code-review, to_review):**
+  - Diff inspected from `baseline_commit` 893fc918d7409d5a96ca45f4a2a2fa87ae6ade22 to HEAD on `feature/init/2-2-wave-data-resources-wavespawner-cmwm5omy` (16 files, +594/-8).
+  - Lens 1 (physics & frame budget): spawn timer correctly delta-scaled in `_physics_process(delta)`; no heavy loops on the hot path. **Finding patched:** `_prune_alive()` allocated a new `Array[Node]` every physics frame — rewritten to in-place backward `remove_at(i)`, zero per-frame allocation, identical semantics. GUT re-run after patch: 41/41 tests, 238 asserts, exit 0 (repair attempt 1 of 3, Godot 4.7.2 headless).
+  - Lens 2 (node lifecycle & memory): `Events.enemy_destroyed` disconnected in `_exit_tree()`; pools are children of the spawner so they free with it; `queue_free()` used throughout (tests included); no `free()` mid-frame; `@export`/`@onready` usage correct.
+  - Lens 3 (signal decoupling): all cross-scene traffic via `Events` autoload (`wave_started`, `enemy_spawned`, `enemy_destroyed`, `wave_cleared`); no `get_parent()` chains; `get_node_or_null(entities_path)` is a NodePath call-down with sane fallbacks. Compliant with Call Down, Signal Up.
+  - Lens 4 (ACs & GUT coverage): all 5 Given/When/Then ACs implemented — wave `.tres` resources with `@export` fields (data-driven, no code per wave), `spawn_wave(n)` reads `wave_0n.tres` and emits `wave_started(n)` + per-enemy `enemy_spawned(type)`, `wave_cleared(n)` fires exactly once at zero alive and the wave never respawns (`_cleared_emitted` + `_cleared_waves`), `max_alive` cap of 24 queues excess, and GUT covers multipliers 1.0/1.25/1.5/1.75/2.0, counting, and single `wave_cleared`.
+  - Known cross-epic dependency (not a defect): enemy `PackedScene`s (`drone/gunship/boss.tscn`) land in Epic 3; until then `_get_pool` warns and skips spawns, with `scene_overrides` as the test seam.

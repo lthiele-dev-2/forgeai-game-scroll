@@ -207,11 +207,9 @@ func _on_enemy_destroyed(enemy_type: String, pos: Vector2, score_value: int) -> 
 
 
 func _prune_alive() -> void:
-	var valid: Array[Node] = []
-	for enemy in _alive:
-		if is_instance_valid(enemy):
-			valid.append(enemy)
-	_alive = valid
+	for i in range(_alive.size() - 1, -1, -1):
+		if not is_instance_valid(_alive[i]):
+			_alive.remove_at(i)
 
 
 func _check_wave_cleared() -> void:
