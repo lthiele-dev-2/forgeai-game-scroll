@@ -1,0 +1,38 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/enemies/boss.gd" id="1_boss"]
+[ext_resource type="Script" path="res://scripts/entities/enemies/enemy_weapon.gd" id="2_weapon"]
+[ext_resource type="Script" path="res://scripts/entities/enemies/boss_phases.gd" id="3_phases"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(160, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
+size = Vector2(168, 104)
+
+[node name="Boss" type="CharacterBody2D"]
+script = ExtResource("1_boss")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -48)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -48)
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(0, -48)
+shape = SubResource("RectangleShape2D_hitbox")
+
+[node name="Weapon" type="Node2D" parent="."]
+script = ExtResource("2_weapon")
+
+[node name="Muzzle" type="Marker2D" parent="Weapon"]
+position = Vector2(-96, -48)
+
+[node name="BossPhases" type="Node" parent="."]
+script = ExtResource("3_phases")

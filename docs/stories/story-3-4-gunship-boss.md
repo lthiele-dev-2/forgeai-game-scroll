@@ -5,9 +5,9 @@ story_key: '3.4'
 forge_task_id: 'cmwm5r65f002listvg1t6hv67'
 priority: 'MEDIUM'
 story_points: 8
-status: 'ready-for-dev'
+status: 'in-progress'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: 'c860d32fba19dd7f380a0817a6321dae97e34c3c'
 ---
 
 # Story [3.4]: Gunship & Boss Enemies with Phase State Machine
@@ -29,12 +29,20 @@ As a player, I want tougher enemy types — a fast gunship and a multi-phase bos
 - `res://tests/test_boss_phases.gd` — GUT tests
 
 ## Tasks & Subtasks
-- [ ] `gunship.tscn` + `gunship.gd` — fast hit-and-run enemy
-- [ ] `boss.tscn` + `boss.gd` + phase state machine — thresholds and patterns
-- [ ] `res://resources/enemy_stats.tres` — add gunship/boss stats
-- [ ] `res://tests/test_boss_phases.gd` — GUT tests
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `gunship.tscn` + `gunship.gd` — fast hit-and-run enemy
+- [x] `boss.tscn` + `boss.gd` + phase state machine — thresholds and patterns
+- [x] `res://resources/enemy_stats.tres` — gunship/boss stat entries present (scene paths, hp, fire_rate, score)
+- [x] `res://tests/test_boss_phases.gd` — GUT tests
+- [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to the `godot-verify` board column, which owns the headless binary)
 
 ## Dev Agent Record
 - **Debug Log:**
+  - No Godot binary in the dev container; headless check + GUT run happen in the `godot-verify` column.
 - **Completion Notes:**
+  - `enemy_weapon.gd` (EnemyWeapon): new `@export burst_count` (default 1) and `@export spread_degrees` (default 0) — `_fire()` now spawns a centered spread/burst of `Vector2.LEFT.rotated(offset)` bullets; defaults keep the drone's single leftward bullet unchanged.
+  - `gunship.gd` (Gunship extends Enemy): `move_speed` 380 > drone 240, `attack_range` 620 and `preferred_distance` 480 keep more standoff than the drone; approaches at full speed outside `attack_range`, closes at half speed down to `preferred_distance`, then strafes vertically (hit-and-run) while firing at the wave-scaled `fire_rate`; `gunship.tscn` Weapon runs a 3-round 24° spread burst.
+  - `boss_phases.gd` (BossPhases, Node): HP-ratio threshold state machine (`hp_thresholds` [1.0, 0.5] descending), `get_phase_for_ratio`, `update_phase` emitting `phase_changed(phase)` only on actual transitions, `reset()` for pool reuse.
+  - `boss.gd` (Boss extends Enemy): `is_boss = true` so `charge_blast.gd` applies raw `blast_damage` instead of the 100x destroy multiplier; `take_damage` updates `BossPhases` at `hp / max_hp` before the death check, so `Events.enemy_destroyed('boss', ...)` fires only on death; high HP (500 base × wave multipliers) means regular 10-damage shots cannot one-shot; `_on_phase_changed` re-applies per-phase weapon config (phase 2: fire rate ×2, 5-round 60° spread); slow approach to `preferred_distance`, fires in range.
+  - `boss.tscn`: Boss(CharacterBody2D) + CollisionShape2D + Sprite2D + Hitbox(Area2D, layer 2) + Weapon(Node2D)+Muzzle(Marker2D) + BossPhases(Node) child.
+  - `resources/enemy_stats.tres`: gunship (hp 60, fire_rate 2.0, score 250) and boss (hp 500, fire_rate 1.0, score 1000) entries already present and now backed by real scenes; wave_04/wave_05 reference them.
+  - `tests/test_boss_phases.gd`: stats/scene-path resolution, gunship tuning vs drone + standoff/strafe/burst directions, gunship death signal + queue_free, boss scene tree + BossPhases child + is_boss, phase transitions at 52%/48%/exactly-50% HP with per-phase weapon config, BossPhases ratio boundaries + idempotent emission, blast-vs-regular damage on boss with enemy_destroyed only on death, charge_blast raw damage on boss vs destroy damage on gunship, WaveSpawner spawning real boss/gunship scenes.
