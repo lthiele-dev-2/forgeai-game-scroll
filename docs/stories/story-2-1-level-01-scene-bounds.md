@@ -5,7 +5,7 @@ story_key: '2.1'
 forge_task_id: 'cmwm5o4kz002bistv8oa8c3cy'
 priority: 'HIGH'
 story_points: 5
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: 'ab2cfcc48bee52de2014218b1daac251b0b6164f'
 ---
@@ -48,4 +48,13 @@ As a player, I want a single side-scrolling level with parallax depth and clearl
   - Per-script `godot --headless --check-only -s res://...` over `scripts/` + `tests/`: known single-script artifacts only (autoload `Events` not instanced under `-s`); `scripts/levels/level_01.gd` and `tests/test_level_01.gd` check clean (exit 0) after repair.
   - Repair attempt 1 of max 3: `tests/test_level_01.gd:74` called non-existent `assert_le()` (GUT 9.7.1 provides `assert_lte()`); fixed the call to `assert_lte()` with identical <= semantics — no assertion weakened. Scene failed to load under GUT before the fix ("does not extend GutTest" due to parse error).
   - GUT suite `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` -> **30/30 tests passed, 113 asserts, 6/6 scripts, exit 0** (was 24/24 with test_level_01.gd skipped; now all 6 scripts load and pass). `repair_attempts` = 1.
-  - Result: PASS — headless Godot check and GUT suite green; status set to `in-review`.
+   - Result: PASS — headless Godot check and GUT suite green; status set to `in-review`.
+ - **Review Agent Record (bmgd-code-review, 2026-11-19, task cmwm5o4kz002bistv8oa8c3cy):**
+   - Diff inspected: `ab2cfcc..HEAD` on `feature/init/2-1-...-cmwm5o4k` — 6 files (scene, script, 2 uid files, GUT test, story).
+   - Lens 1 (physics/frame budget): PASS — `level_01.gd` has no per-frame logic; `spawn_mech()` runs once in `_ready()`; no un-deltaed motion, no hot-path allocations.
+   - Lens 2 (node lifecycle/memory): PASS — `@export`/`@onready` used correctly, static typing throughout (`Mech`, `Array[Marker2D]`, `-> void`/`-> Mech`), test cleanup uses `queue_free()` in `after_each()`.
+   - Lens 3 (signal decoupling): PASS — call-down only (`mech.set_bounds(bounds)`, `has_method`-guarded `wave_spawner.set_bounds(bounds)`); no `get_parent()` chains; `@onready $Path` refs are standard.
+   - Lens 4 (ACs & GUT coverage): PASS — all 6 Given/When/Then ACs implemented in `scenes/levels/level_01.tscn` + `scripts/levels/level_01.gd` and covered by `tests/test_level_01.gd` (structure, bounds validity, 4-edge coverage probes, parallax rates 0.2/0.5/0.8, marker ordering inside bounds, mech spawn + bounds pushed down + camera limits). Bounds edge shapes verified geometrically: left/right 64x1208 at x=-32/5792, top/bottom 5888x64 at y=-572/572 cover Rect2(0,-540,5760,1080) on all four edges.
+   - Cross-check against `mech.gd`: `set_bounds()` is idempotent; mech `_ready()` applies its own default then level overrides with level bounds — final state correct. Camera limits asserted equal to level bounds in test.
+   - Defects found: none. Repair attempts: 0. No patches applied.
+   - Result: PASS — status set to `done`.
