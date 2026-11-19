@@ -39,6 +39,7 @@ As a player, I want to hold the fire button and shoot a steady stream of project
 ## Dev Agent Record
 - **Debug Log:**
   - No Godot binary exists in the dev container (`godot: command not found`); headless syntax check + GUT run are delegated to the `godot-verify` board column, which owns that gate.
+  - **godot-verify probe (task cmwm5ppl9002gistvndcu3iuw):** `godot --version` -> `/usr/bin/bash: line 1: godot: command not found` (exit 127); `which godot godot4` -> not found; exhaustive `find / -xdev -maxdepth 7 -type f -iname "godot*" -perm -u+x` -> no binary anywhere in the container. `addons/gut/gut_cmdln.gd`, `tests/` (incl. `test_weapon.gd`), and `project.godot` are present. Environment failure path: `forge_ask_human` called to decide static fallback vs. waiting for environment fix.
 - **Completion Notes:**
   - `weapon.gd` (Weapon/Node2D): `hold_fire(delta)`/`release_fire()`, cooldown = `1/fire_rate` with immediate first shot, owns an `ObjectPool` child (`ShotPool`, cap `pool_size` = 64); when the cap is reached the oldest active shot is released and reused before `acquire()`.
   - `player_shot.gd` (PlayerShot/Area2D, layer 4 / mask 2): moves `direction * speed * delta` in `_physics_process`, releases to pool on `max_lifetime` expiry or leaving `level_bounds`, on `area_entered` deals `damage * enemy_multiplier` via `take_damage` and releases. Never `free()` mid-frame.
