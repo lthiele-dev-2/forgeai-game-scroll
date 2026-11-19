@@ -34,6 +34,9 @@ func after_each() -> void:
 	Input.action_release("move_down")
 	Input.action_release("shoot")
 	Input.action_release("charge_shot")
+	for child in get_children():
+		if child is EnemyBullet and (child as EnemyBullet).is_active:
+			(child as EnemyBullet).release()
 	if is_instance_valid(mech):
 		remove_child(mech)
 		mech.free()

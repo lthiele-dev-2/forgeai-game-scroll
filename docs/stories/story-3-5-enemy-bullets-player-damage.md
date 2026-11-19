@@ -5,7 +5,7 @@ story_key: '3.5'
 forge_task_id: 'cmwm5rpeh002nistvjcwdu4hm'
 priority: 'HIGH'
 story_points: 5
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: '248d41359c0aa09f2338a0ced1df3198777b31f3'
 ---
@@ -48,4 +48,10 @@ As a player, I want enemy fire and contact to visibly drain my mech's hull integ
   - `scripts/entities/mech.gd`: `@export max_hull: int = 100`; `hull` starts at `max_hull` in `_ready` (initial `Events.hull_changed` emitted); `take_damage(d)` clamps hull at 0, emits `Events.hull_changed(hull, max_hull)` per hit, and at 0 emits `Events.player_died()` exactly once via the `is_alive` guard; Hitbox `area_entered`/`body_entered` wired in `_ready`, disconnected in `_exit_tree`, applying `base_damage * enemy_multiplier` (bullet `damage`/`enemy_multiplier`, enemy body/hitbox `contact_damage`/`enemy_multiplier`) and emitting `Events.player_hit(damage, pos)`; after death the mech ignores movement and fire input.
   - `scenes/entities/mech.tscn`: Hitbox `collision_mask = 9` (layer 1 bodies + layer 8 enemy bullets).
   - Enemy weapon fire integration: `enemy_weapon.gd` already pools and fires bullets leftward from the Muzzle with an active-bullet cap; `drone.gd`/`gunship.gd`/`boss.gd` auto-load `res://scenes/entities/projectiles/enemy_bullet.tscn`, which now exists.
-  - `tests/test_damage.gd`: 12 GUT tests — export + hull init (default and custom `max_hull`), `hull_changed` params, single `player_died` at 0, bullet and body damage formula `base_damage * enemy_multiplier` with `player_hit(damage, pos)`, input/fire gating after death, leftward `speed * delta` movement, bounds/hit pool release, pool reuse, and drone firing the real pooled `EnemyBullet` scene.
+   - `tests/test_damage.gd`: 12 GUT tests — export + hull init (default and custom `max_hull`), `hull_changed` params, single `player_died` at 0, bullet and body damage formula `base_damage * enemy_multiplier` with `player_hit(damage, pos)`, input/fire gating after death, leftward `speed * delta` movement, bounds/hit pool release, pool reuse, and drone firing the real pooled `EnemyBullet` scene.
+- **Review Record (bmgd-code-review, task cmwm5rpeh002nistvjcwdu4hm):**
+  - Diff inspected from `baseline_commit` 248d413 to HEAD on `taskBranch` (enemy_bullet.gd/.tscn, mech.gd/.tscn, gunship.gd, wave_spawner.gd, test_damage.gd).
+  - Lens 1 (physics/frame budget): PASS — bullet motion is `direction * speed * delta` in `_physics_process(delta)`; no per-frame allocations on the 60fps hot path; spawner changes are in `start_wave`, off the hot path.
+  - Lens 2 (node lifecycle/memory): PASS after patch — pooled bullets release via `ObjectPool.release` (never `free()` mid-frame); all signal connections disconnected in `_exit_tree`. Patched: `_die()` now zeroes `velocity` so the mech halts immediately on death; `test_damage.gd` `after_each` releases active test-parented bullets to the pool (clears the orphan warning noted in verify).
+  - Lens 3 (signal decoupling): PASS — cross-scene events go through the `Events` autoload (`hull_changed`, `player_hit`, `player_died`); hitbox uses direct child signal connections only; no `get_parent()` node-path chains.
+  - Lens 4 (ACs/GUT): PASS — collision wiring verified: enemy bodies on default layer 1 and bullets on layer 8 are both in the mech Hitbox `collision_mask = 9`; enemy hitboxes on layer 2 and player shots on layer 4 are excluded (no friendly fire); bullet `collision_mask = 1` reaches the mech Hitbox on layer 1. All 5 Given/When/Then ACs implemented and covered by the 12 GUT tests in `tests/test_damage.gd` (verify column: 105/105 passing, exit 0).

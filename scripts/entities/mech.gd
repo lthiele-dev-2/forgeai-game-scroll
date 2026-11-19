@@ -161,4 +161,5 @@ func _die() -> void:
 	if not is_alive:
 		return
 	is_alive = false
+	velocity = Vector2.ZERO
 	Events.player_died.emit()
