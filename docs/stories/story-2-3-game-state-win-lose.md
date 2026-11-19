@@ -5,9 +5,9 @@ story_key: '2.3'
 forge_task_id: 'cmwm5p5wk002eistvvy4pdqa3'
 priority: 'CRITICAL'
 story_points: 8
-status: 'ready-for-dev'
+status: 'in-progress'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: 'c8776954335b8609bdd9afdeadd60dd8b1521d34'
 ---
 
 # Story [2.3]: GameManager State Machine & Win/Lose Flow
@@ -30,11 +30,15 @@ As a player, I want clear game states — title, gameplay, pause, game over, vic
 - `res://tests/test_game_state_flow.gd` — GUT transition tests
 
 ## Tasks & Subtasks
-- [ ] `res://scripts/globals/game_manager.gd` — states, validated transitions, EventBus listeners, wave progression
-- [ ] `res://scripts/ui/menu_layer.gd` — menu visibility driven by `game_state_changed`
-- [ ] `res://tests/test_game_state_flow.gd` — GUT tests for every transition
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `res://scripts/globals/game_manager.gd` — states, validated transitions, EventBus listeners, wave progression
+- [x] `res://scripts/ui/menu_layer.gd` — menu visibility driven by `game_state_changed`
+- [x] `res://tests/test_game_state_flow.gd` — GUT tests for every transition
+- [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to `godot-verify` column; no godot binary in this container)
 
 ## Dev Agent Record
 - **Debug Log:**
-- **Completion Notes:**
+  - Implemented full state machine in `game_manager.gd` with validated transition table, `PROCESS_MODE_ALWAYS` for pause input while tree is paused, breather countdown in `_physics_process` guarded to GAMEPLAY, and injected `wave_spawner` reference (no cross-tree `get_node()`).
+  - `level_01.gd` injects its `WaveSpawner` into `GameManager` on `_ready()` and clears it on `_exit_tree()`.
+  - `main.gd` holds the active level under `World` only in GAMEPLAY/PAUSE and starts wave 1 when a fresh level is instanced.
+  - `menu_layer.gd` shows exactly one menu per state (none in GAMEPLAY); four minimal menu scenes created under `scenes/menus/` for story 4.2 to enrich with buttons.
+- **Completion Notes:** All acceptance criteria covered by `res://tests/test_game_state_flow.gd` (boot TITLE, validated transitions + `game_state_changed`, pause toggle with `get_tree().paused`, `player_died` -> GAME_OVER + `game_over`, final `wave_cleared` -> VICTORY + `victory`, breather then `spawn_wave(n+1)` via injected spawner, main.tscn menu/world behavior).

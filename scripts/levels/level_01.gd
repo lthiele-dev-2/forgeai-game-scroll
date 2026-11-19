@@ -6,12 +6,18 @@ const MECH_SCENE: PackedScene = preload("res://scenes/entities/mech.tscn")
 @export var bounds: Rect2 = Rect2(Vector2(0.0, -540.0), Vector2(5760.0, 1080.0))
 @export var mech_spawn_position: Vector2 = Vector2(480.0, 0.0)
 
-@onready var wave_spawner: Node2D = $WaveSpawner
+@onready var wave_spawner: WaveSpawner = $WaveSpawner
 @onready var entities: Node2D = $Entities
 
 
 func _ready() -> void:
+	GameManager.set_wave_spawner(wave_spawner)
 	spawn_mech()
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(GameManager) and GameManager.wave_spawner == wave_spawner:
+		GameManager.set_wave_spawner(null)
 
 
 func spawn_mech() -> Mech:
@@ -22,6 +28,10 @@ func spawn_mech() -> Mech:
 	if wave_spawner.has_method("set_bounds"):
 		wave_spawner.set_bounds(bounds)
 	return mech
+
+
+func start_wave(n: int) -> bool:
+	return wave_spawner.spawn_wave(n)
 
 
 func get_spawn_markers() -> Array[Marker2D]:
