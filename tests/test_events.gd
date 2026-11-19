@@ -19,7 +19,7 @@ const EXPECTED_SIGNALS: Array[String] = [
 
 
 func test_declares_exactly_the_14_signal_catalog() -> void:
-	assert_eq(Events.get_signal_list().size(), 14, "Events must declare exactly 14 signals")
+	assert_eq(Events.get_script().get_script_signal_list().size(), 14, "Events must declare exactly 14 signals")
 	for signal_name in EXPECTED_SIGNALS:
 		assert_true(Events.has_signal(signal_name), "Events must declare signal '%s'" % signal_name)
 

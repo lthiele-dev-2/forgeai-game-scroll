@@ -5,7 +5,7 @@ story_key: '1.3'
 forge_task_id: 'cmwm5nni00029istv1h3u3a29'
 priority: 'MEDIUM'
 story_points: 3
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: '723df4613d285b870369b8e80710ca3add4621f3'
 ---
@@ -41,7 +41,16 @@ As a player, I want the camera to follow the mech horizontally with smoothing wh
   - `_physics_process(delta)` pins `camera.global_position.y = level_midline_y` after clamping → horizontal-only follow with smoothing on x.
   - Headless `godot --headless --check-only` + GUT run deferred to the `godot-verify` board column (no godot binary in this container).
  - **Completion Notes:** All ACs covered by `res://tests/test_camera_rig.gd` (smoothing flags, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline while mech moves vertically).
- - **Verify Agent Record (godot-verify, attempt 2):**
-   - Environment probe: `which godot godot4` -> not found; `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; filesystem search (`find / -iname "*godot*"` excluding workspace) -> no Godot binary in container.
-   - GUT probe: `addons/gut/gut_cmdln.gd` does NOT exist in the repo (no `addons/` directory); `tests/` contains test_camera_rig.gd, test_events.gd, test_game_manager.gd, test_mech_movement.gd, test_object_pool.gd.
-   - Blocked: cannot run `godot --headless --check-only` or `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` without the engine binary and the GUT addon. Escalated via forge_ask_human (environment failure path).
+  - **Verify Agent Record (godot-verify, attempt 2):**
+    - Environment probe: `which godot godot4` -> not found; `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; filesystem search (`find / -iname "*godot*"` excluding workspace) -> no Godot binary in container.
+    - GUT probe: `addons/gut/gut_cmdln.gd` does NOT exist in the repo (no `addons/` directory); `tests/` contains test_camera_rig.gd, test_events.gd, test_game_manager.gd, test_mech_movement.gd, test_object_pool.gd.
+    - Blocked: cannot run `godot --headless --check-only` or `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` without the engine binary and the GUT addon. Escalated via forge_ask_human (environment failure path).
+  - **Verify Agent Record (godot-verify, attempt 3):**
+    - Human resume answer recorded: godot binary path `C:\dev\apps\godot\4.7.2` (Windows path; not present in this Linux container — verified by filesystem search). Repair: provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary (same 4.7.2 version the human pointed at) and installed the GUT `v9.6.1` addon into `addons/gut/` (was missing from the repo).
+    - Headless editor import (`godot --headless --editor --quit`) built `.godot/global_script_class_cache.cfg` (registers `GutTest`); project load `godot --headless --quit` -> exit 0, no scene parse errors.
+    - Per-script `godot --headless --check-only -s res://...` over `scripts/` + `tests/`: only single-script-mode artifacts remain (autoload `Events` not instanced under `-s`; GUT font import skipped without libfontconfig) — both compile cleanly in full-project context, proven by the GUT run below.
+    - GUT suite `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit` -> **24/24 tests passed, 75 asserts, exit 0** (first run: 20/24; 4 pre-existing failures from stories 1.1/1.2, repaired within budget, no assertion weakened):
+      - `tests/test_events.gd`: count script-declared signals via `Events.get_script().get_script_signal_list()` (14) instead of `get_signal_list()` which includes 13 inherited Node signals.
+      - `tests/test_mech_movement.gd`: `after_each` now removes and `free()`s the mech immediately (deferred `queue_free` left it overlapping the next test's mech at (0,0), zeroing `velocity.x` on the first tick); float comparisons use `assert_almost_eq(..., 0.001)` to absorb float32-vs-float64 rounding (e.g. 23.3333339691162 vs 23.3333333333333).
+    - All 5 `test_camera_rig.gd` tests (this story's ACs: smoothing enabled/tuned, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline under vertical motion) pass.
+    - Result: headless Godot 4.7.2 syntax/scene check + GUT suite PASS on `taskBranch`; status set to `in-review`.
