@@ -1,6 +1,14 @@
-[gd_scene format=3]
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/ui/menu_layer.gd" id="2_menulayer"]
+[ext_resource type="PackedScene" path="res://scenes/menus/title.tscn" id="3_title"]
+[ext_resource type="PackedScene" path="res://scenes/menus/pause_menu.tscn" id="4_pause"]
+[ext_resource type="PackedScene" path="res://scenes/menus/game_over.tscn" id="5_gameover"]
+[ext_resource type="PackedScene" path="res://scenes/menus/victory.tscn" id="6_victory"]
 
 [node name="Main" type="Node"]
+script = ExtResource("1_main")
 
 [node name="World" type="Node2D" parent="."]
 
@@ -15,9 +23,18 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="MenuLayer" type="Control" parent="UI"]
+script = ExtResource("2_menulayer")
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="TitleMenu" parent="UI/MenuLayer" instance=ExtResource("3_title")]
+
+[node name="PauseMenu" parent="UI/MenuLayer" instance=ExtResource("4_pause")]
+
+[node name="GameOverMenu" parent="UI/MenuLayer" instance=ExtResource("5_gameover")]
+
+[node name="VictoryMenu" parent="UI/MenuLayer" instance=ExtResource("6_victory")]
