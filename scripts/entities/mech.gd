@@ -10,6 +10,7 @@ extends CharacterBody2D
 @export var camera_zoom: float = 1.0
 
 @onready var camera: Camera2D = $Camera2D
+@onready var weapon: Weapon = $Weapon
 
 var level_midline_y: float = 540.0
 
@@ -18,12 +19,20 @@ func _ready() -> void:
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = camera_smoothing_speed
 	camera.zoom = Vector2(camera_zoom, camera_zoom)
+	weapon.shot_fired.connect(_on_weapon_shot_fired)
 	set_bounds(bounds)
+
+
+func _exit_tree() -> void:
+	if weapon != null and weapon.shot_fired.is_connected(_on_weapon_shot_fired):
+		weapon.shot_fired.disconnect(_on_weapon_shot_fired)
 
 
 func set_bounds(rect: Rect2) -> void:
 	bounds = rect
 	level_midline_y = rect.get_center().y
+	if weapon != null:
+		weapon.set_level_bounds(rect)
 	if camera == null:
 		return
 	camera.limit_left = rect.position.x
@@ -50,3 +59,16 @@ func _physics_process(delta: float) -> void:
 	position.y = clampf(position.y, bounds.position.y, bounds.end.y)
 
 	camera.global_position.y = level_midline_y
+
+	if Input.is_action_pressed("shoot"):
+		weapon.hold_fire(delta)
+	else:
+		weapon.release_fire()
+
+
+func set_projectiles_container(container: Node2D) -> void:
+	weapon.set_projectiles_container(container)
+
+
+func _on_weapon_shot_fired(muzzle_pos: Vector2) -> void:
+	Events.shot_fired.emit(muzzle_pos)

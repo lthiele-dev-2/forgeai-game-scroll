@@ -8,6 +8,7 @@ const MECH_SCENE: PackedScene = preload("res://scenes/entities/mech.tscn")
 
 @onready var wave_spawner: WaveSpawner = $WaveSpawner
 @onready var entities: Node2D = $Entities
+@onready var projectiles: Node2D = $Projectiles
 
 
 func _ready() -> void:
@@ -25,6 +26,7 @@ func spawn_mech() -> Mech:
 	mech.position = mech_spawn_position
 	entities.add_child(mech)
 	mech.set_bounds(bounds)
+	mech.set_projectiles_container(projectiles)
 	if wave_spawner.has_method("set_bounds"):
 		wave_spawner.set_bounds(bounds)
 	return mech
