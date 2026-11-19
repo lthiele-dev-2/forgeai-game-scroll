@@ -11,6 +11,7 @@ extends CharacterBody2D
 
 @onready var camera: Camera2D = $Camera2D
 @onready var weapon: Weapon = $Weapon
+@onready var charge_glow: Sprite2D = $Visual/ChargeGlow
 
 var level_midline_y: float = 540.0
 
@@ -20,12 +21,21 @@ func _ready() -> void:
 	camera.position_smoothing_speed = camera_smoothing_speed
 	camera.zoom = Vector2(camera_zoom, camera_zoom)
 	weapon.shot_fired.connect(_on_weapon_shot_fired)
+	weapon.charge_changed.connect(_on_weapon_charge_changed)
+	weapon.charge_fired.connect(_on_weapon_charge_fired)
+	if charge_glow != null:
+		charge_glow.visible = false
 	set_bounds(bounds)
 
 
 func _exit_tree() -> void:
-	if weapon != null and weapon.shot_fired.is_connected(_on_weapon_shot_fired):
-		weapon.shot_fired.disconnect(_on_weapon_shot_fired)
+	if weapon != null:
+		if weapon.shot_fired.is_connected(_on_weapon_shot_fired):
+			weapon.shot_fired.disconnect(_on_weapon_shot_fired)
+		if weapon.charge_changed.is_connected(_on_weapon_charge_changed):
+			weapon.charge_changed.disconnect(_on_weapon_charge_changed)
+		if weapon.charge_fired.is_connected(_on_weapon_charge_fired):
+			weapon.charge_fired.disconnect(_on_weapon_charge_fired)
 
 
 func set_bounds(rect: Rect2) -> void:
@@ -60,7 +70,7 @@ func _physics_process(delta: float) -> void:
 
 	camera.global_position.y = level_midline_y
 
-	if Input.is_action_pressed("shoot"):
+	if Input.is_action_pressed("shoot") or Input.is_action_pressed("charge_shot"):
 		weapon.hold_fire(delta)
 	else:
 		weapon.release_fire()
@@ -72,3 +82,13 @@ func set_projectiles_container(container: Node2D) -> void:
 
 func _on_weapon_shot_fired(muzzle_pos: Vector2) -> void:
 	Events.shot_fired.emit(muzzle_pos)
+
+
+func _on_weapon_charge_changed(level: float) -> void:
+	if charge_glow != null:
+		charge_glow.visible = level > 0.0
+	Events.charge_changed.emit(level)
+
+
+func _on_weapon_charge_fired(level: float) -> void:
+	Events.charge_fired.emit(level)

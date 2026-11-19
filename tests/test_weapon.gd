@@ -95,10 +95,11 @@ func test_release_fire_stops_and_next_hold_fires_immediately() -> void:
 	_hold(5)
 	assert_eq(container.get_child_count(), 5)
 	weapon.release_fire()
-	_hold(0)
-	assert_eq(container.get_child_count(), 5, "no shots while fire is released")
+	assert_eq(container.get_child_count(), 6, "release below the min charge threshold fires a normal shot")
+	weapon.release_fire()
+	assert_eq(container.get_child_count(), 6, "repeated release without a new hold fires nothing")
 	weapon.hold_fire(DELTA)
-	assert_eq(container.get_child_count(), 6, "release resets cooldown so the next hold fires at once")
+	assert_eq(container.get_child_count(), 7, "release resets cooldown so the next hold fires at once")
 
 
 func test_shot_moves_right_by_speed_times_delta() -> void:
