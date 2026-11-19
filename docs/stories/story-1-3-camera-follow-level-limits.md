@@ -5,7 +5,7 @@ story_key: '1.3'
 forge_task_id: 'cmwm5nni00029istv1h3u3a29'
 priority: 'MEDIUM'
 story_points: 3
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: '723df4613d285b870369b8e80710ca3add4621f3'
 ---
@@ -54,3 +54,11 @@ As a player, I want the camera to follow the mech horizontally with smoothing wh
       - `tests/test_mech_movement.gd`: `after_each` now removes and `free()`s the mech immediately (deferred `queue_free` left it overlapping the next test's mech at (0,0), zeroing `velocity.x` on the first tick); float comparisons use `assert_almost_eq(..., 0.001)` to absorb float32-vs-float64 rounding (e.g. 23.3333339691162 vs 23.3333333333333).
     - All 5 `test_camera_rig.gd` tests (this story's ACs: smoothing enabled/tuned, zoom 1.0 at 1920x1080, limits == level bounds, y pinned to midline under vertical motion) pass.
     - Result: headless Godot 4.7.2 syntax/scene check + GUT suite PASS on `taskBranch`; status set to `in-review`.
+  - **Review Agent Record (bmgd-code-review):**
+    - Diff inspected from `baseline_commit` 723df46 to HEAD on `taskBranch` (3 commits: feat/story, test/verify x2).
+    - **Lens 1 — Physics & Frame Budget:** All velocity integration in `_physics_process(delta)` scaled by `delta` (mech.gd:41-45). Camera y-pin `camera.global_position.y = level_midline_y` (mech.gd:52) is a per-frame position write, not velocity motion — no delta needed; Camera2D node `global_position` is unsmoothed (smoothing affects render transform only), so the pin is exact. No per-frame allocations on the hot path. PASS.
+    - **Lens 2 — Node Lifecycle & Memory:** `@onready var camera: Camera2D = $Camera2D` with static type; `@export` vars typed. No dynamic nodes created in story code. Tests use `queue_free()` in `after_each` (test_camera_rig.gd:18). `set_bounds()` null-guards camera. PASS.
+    - **Lens 3 — Signal Decoupling:** `set_bounds(rect)` called down from level to mech (call-down); mech configures its child Camera2D directly. No `get_parent()`/`get_node()` chains across the tree. No cross-scene signals needed for this story. PASS.
+    - **Lens 4 — AC & GUT Coverage:** All 5 ACs mapped to tests in `test_camera_rig.gd` (5/5 camera tests passed in GUT 24/24 run): smoothing enabled+tuned (test 1), zoom 1.0 at 1920x1080 (test 2), limits == level Rect2 (test 3), horizontal follow + y pinned (test 4), y stays pinned under vertical motion (test 5). PASS.
+    - **Findings:** No defects requiring auto-patch. Observations: default `bounds` export Rect2(0,0,1920,1080) applied in `_ready()` before level calls `set_bounds()` — correct bootstrap; `.uid` files and `addons/gut/` added by verify column are infrastructure, not story code; `test_mech_movement.gd` uses `free()` in test `after_each` (safe — synchronous test cleanup, not mid-frame gameplay). Zero repair attempts used.
+    - Result: review PASS, status set to `done`.
