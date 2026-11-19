@@ -137,7 +137,7 @@ func test_release_at_full_charge_fires_single_reusable_blast_and_starts_cooldown
 	assert_eq(weapon.hold_time, 0.0)
 	assert_signal_emitted_with_parameters(weapon, "charge_fired", [1.0], -1)
 	blast._deactivate()
-	_hold(60)
+	_hold(180)
 	assert_eq(weapon.charge_level, 1.0, "charging resumes after the cooldown elapsed")
 	weapon.release_fire()
 	assert_eq(weapon.get_charge_blast(), blast, "the same single blast instance is reused, never reinstantiated")

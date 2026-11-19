@@ -5,7 +5,7 @@ story_key: '3.2'
 forge_task_id: 'cmwm5q7nh002histvfj79bw9b'
 priority: 'HIGH'
 story_points: 8
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: '74fa1692b5cf78a1e733224645e3a41f0f46a5b3'
 ---
@@ -44,4 +44,9 @@ As a player, I want to hold fire to charge a screen-clearing heavy blast and rel
   - `weapon.gd`: static formula helpers `compute_charge_level` / `compute_blast_damage` / `compute_cooldown`; `@export` `full_charge_time`, `base_blast_damage`, `base_cooldown`, `min_charge_level`; `hold_fire(delta)` keeps 3.1 continuous fire and additionally accumulates `hold_time`, updates `charge_level`, emits `charge_changed(level)` each tick — skipped while `cooldown_timer` runs (meter 0, no emission); `release_fire()` below `min_charge_level` fires a normal shot, at/above fires the single reusable `ChargeBlast`, sets `cooldown_timer = base_cooldown * (1 - 0.5*level)`, emits `charge_fired(level)`, resets `hold_time`/`charge_level` and emits `charge_changed(0.0)`; new signals `charge_changed` / `charge_fired` go up to the mech.
   - `charge_blast.gd` / `charge_blast.tscn`: single reusable `Area2D` (layer 4 / mask 2), `top_level` child of the weapon, `fire(pos, dmg, bounds)` covers the level bounds, deactivates after `blast_duration`; `area_entered` destroys regular enemies and deals exactly `blast_damage` to bosses (`is_boss` flag).
   - `mech.gd`: relays `weapon.charge_changed`/`charge_fired` to `Events.charge_changed`/`Events.charge_fired`, drives `Visual/ChargeGlow` visibility (`level > 0`), reads `shoot` or `charge_shot` (shared button), disconnects in `_exit_tree()`.
-  - `tests/test_charge_formula.gd`: 9 GUT tests covering formula levels {0.0, 0.25, 0.5, 1.0}, clamp saturation, per-tick `charge_changed`, release below/at threshold, cooldown blocking, blast reuse, boss/regular damage, and mech glow + Events relay integration. `tests/test_weapon.gd` release test updated for the new below-threshold release shot.
+   - `tests/test_charge_formula.gd`: 9 GUT tests covering formula levels {0.0, 0.25, 0.5, 1.0}, clamp saturation, per-tick `charge_changed`, release below/at threshold, cooldown blocking, blast reuse, boss/regular damage, and mech glow + Events relay integration. `tests/test_weapon.gd` release test updated for the new below-threshold release shot.
+   - 2026-11-19 godot-verify (task cmwm5q7nh002histvfj79bw9b, attempt 2): no `godot` binary in the container (deep `find / -xdev -iname 'godot*'` -> none); provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary (same 4.7.2 the human previously pointed at) -> `godot --version` = `4.7.2.stable.official.ed1daf0bf`. GUT v9.7.1 present at `addons/gut/gut_cmdln.gd`; 10 test scripts in `tests/`.
+     - `godot --headless --import` -> exit 0; `godot --headless --quit` (main-scene smoke load) -> exit 0, no script errors.
+     - Per-script `godot --headless --check-only -s res://...` over all 24 `scripts/**/*.gd` + `tests/**/*.gd`: no parse/syntax errors; only the known single-script-mode autoload noise (`Identifier not found: Events/GameManager`, autoloads register only in-project). In-project compile is authoritative and passed via the smoke load + GUT run.
+     - `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`, attempt 1: 72/73 passed; `test_release_at_full_charge_fires_single_reusable_blast_and_starts_cooldown` (test_charge_formula.gd:141) failed `[0.0] expected [1.0]` — the test held only 60 ticks (1.0 s) after release, but the level-1.0 cooldown is `4.0 * (1 - 0.5*1.0) = 2.0 s`, so no correct implementation could resume charging; test arithmetic repaired to `_hold(180)` (120 ticks elapse the 2.0 s cooldown, 60 more saturate the 0.5 s charge), assertion `charge_level == 1.0` unchanged. Repair attempt 1 of max 3.
+     - Attempt 2: GUT exit 0 — **73/73 tests passed, 408/408 asserts**, 0 failures (16 orphan warnings only, pre-existing across suites). Headless verification PASS.
