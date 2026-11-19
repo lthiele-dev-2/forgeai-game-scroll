@@ -1,6 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/level_01.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/levels/wave_spawner.gd" id="2_spawner"]
+[ext_resource type="Resource" path="res://resources/enemy_stats.tres" id="3_stats"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
 size = Vector2(64, 1208)
@@ -49,6 +51,8 @@ position = Vector2(2880, 572)
 shape = SubResource("RectangleShape2D_bottom")
 
 [node name="WaveSpawner" type="Node2D" parent="."]
+script = ExtResource("2_spawner")
+enemy_stats = ExtResource("3_stats")
 
 [node name="SpawnPoint1" type="Marker2D" parent="WaveSpawner"]
 position = Vector2(1440, -160)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/wave_data.gd" id="1_wave"]
+
+[resource]
+script = ExtResource("1_wave")
+wave_number = 2
+enemy_counts = {"drone": 6, "gunship": 1}
+spawn_interval = 0.9
+hp_multiplier = 1.1
+fire_rate_multiplier = 1.1
+score_values = {"drone": 100, "gunship": 250}
+wave_clear_bonus = 400
