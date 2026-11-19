@@ -8,6 +8,8 @@ const MAX_POOLED_BULLETS: int = 64
 @export var bullet_scene: PackedScene = null
 @export var base_damage: float = 8.0
 @export var pool_size: int = MAX_POOLED_BULLETS
+@export var burst_count: int = 1
+@export var spread_degrees: float = 0.0
 
 var fire_rate: float = 1.0
 var pool: ObjectPool = null
@@ -64,6 +66,21 @@ func hold_fire(delta: float) -> void:
 func _fire() -> void:
 	if bullet_scene == null or pool == null or _muzzle == null:
 		return
+	var count: int = maxi(burst_count, 1)
+	for i in range(count):
+		_spawn_bullet(_bullet_direction(i, count))
+	bullet_fired.emit(_muzzle.global_position)
+
+
+func _bullet_direction(index: int, count: int) -> Vector2:
+	if count <= 1 or spread_degrees == 0.0:
+		return Vector2.LEFT
+	var step: float = deg_to_rad(spread_degrees)
+	var offset: float = (float(index) - float(count - 1) * 0.5) * step
+	return Vector2.LEFT.rotated(offset)
+
+
+func _spawn_bullet(direction: Vector2) -> void:
 	_prune_active()
 	if _active_bullets.size() >= pool_size:
 		var oldest: Node = _active_bullets.pop_front()
@@ -79,9 +96,8 @@ func _fire() -> void:
 		parent = self
 	parent.add_child(bullet)
 	if bullet.has_method("fire"):
-		bullet.call("fire", _muzzle.global_position, Vector2.LEFT, base_damage, pool, level_bounds)
+		bullet.call("fire", _muzzle.global_position, direction, base_damage, pool, level_bounds)
 	_active_bullets.append(bullet)
-	bullet_fired.emit(_muzzle.global_position)
 
 
 func _build_pool() -> void:
