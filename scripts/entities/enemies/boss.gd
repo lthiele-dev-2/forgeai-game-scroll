@@ -92,8 +92,9 @@ func _apply_phase() -> void:
 	if _weapon == null:
 		return
 	var phase: int = _phases.current_phase if _phases != null else 1
-	var rate_idx: int = clampi(phase - 1, 0, maxi(phase_fire_rate_multipliers.size() - 1, 0))
-	_weapon.set_fire_rate(fire_rate * phase_fire_rate_multipliers[rate_idx])
+	if phase_fire_rate_multipliers.size() > 0:
+		var rate_idx: int = clampi(phase - 1, 0, phase_fire_rate_multipliers.size() - 1)
+		_weapon.set_fire_rate(fire_rate * phase_fire_rate_multipliers[rate_idx])
 	if phase_burst_counts.size() > 0:
 		_weapon.burst_count = phase_burst_counts[clampi(phase - 1, 0, phase_burst_counts.size() - 1)]
 	if phase_spread_degrees.size() > 0:

@@ -5,7 +5,7 @@ story_key: '3.4'
 forge_task_id: 'cmwm5r65f002listvg1t6hv67'
 priority: 'MEDIUM'
 story_points: 8
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: 'c860d32fba19dd7f380a0817a6321dae97e34c3c'
 ---
@@ -49,4 +49,12 @@ As a player, I want tougher enemy types — a fast gunship and a multi-phase bos
   - `boss.gd` (Boss extends Enemy): `is_boss = true` so `charge_blast.gd` applies raw `blast_damage` instead of the 100x destroy multiplier; `take_damage` updates `BossPhases` at `hp / max_hp` before the death check, so `Events.enemy_destroyed('boss', ...)` fires only on death; high HP (500 base × wave multipliers) means regular 10-damage shots cannot one-shot; `_on_phase_changed` re-applies per-phase weapon config (phase 2: fire rate ×2, 5-round 60° spread); slow approach to `preferred_distance`, fires in range.
   - `boss.tscn`: Boss(CharacterBody2D) + CollisionShape2D + Sprite2D + Hitbox(Area2D, layer 2) + Weapon(Node2D)+Muzzle(Marker2D) + BossPhases(Node) child.
   - `resources/enemy_stats.tres`: gunship (hp 60, fire_rate 2.0, score 250) and boss (hp 500, fire_rate 1.0, score 1000) entries already present and now backed by real scenes; wave_04/wave_05 reference them.
-  - `tests/test_boss_phases.gd`: stats/scene-path resolution, gunship tuning vs drone + standoff/strafe/burst directions, gunship death signal + queue_free, boss scene tree + BossPhases child + is_boss, phase transitions at 52%/48%/exactly-50% HP with per-phase weapon config, BossPhases ratio boundaries + idempotent emission, blast-vs-regular damage on boss with enemy_destroyed only on death, charge_blast raw damage on boss vs destroy damage on gunship, WaveSpawner spawning real boss/gunship scenes.
+   - `tests/test_boss_phases.gd`: stats/scene-path resolution, gunship tuning vs drone + standoff/strafe/burst directions, gunship death signal + queue_free, boss scene tree + BossPhases child + is_boss, phase transitions at 52%/48%/exactly-50% HP with per-phase weapon config, BossPhases ratio boundaries + idempotent emission, blast-vs-regular damage on boss with enemy_destroyed only on death, charge_blast raw damage on boss vs destroy damage on gunship, WaveSpawner spawning real boss/gunship scenes.
+- **Review Report (bmgd-code-review, task cmwm5r65f002listvg1t6hv67, 2026-11-19):**
+  - Diff inspected: `git diff c860d32..HEAD` on taskBranch — 12 files (boss/gunship scenes+scripts, boss_phases.gd, enemy_weapon.gd burst/spread, test_boss_phases.gd, story file).
+  - Lens 1 (physics & frame budget): PASS — all motion in `_physics_process(delta)`; `move_toward(..., deceleration * delta)` and `_strafe_timer -= delta` are delta-scaled; movement via velocity + `move_and_slide()`; burst loop bounded by `burst_count` (≤5) with pool `acquire()`, no per-frame `instantiate()` on the hot path.
+  - Lens 2 (node lifecycle & memory): PASS — `_die()` uses `pool.release(self)`/`queue_free()`, never `free()` mid-frame; `boss.gd::_exit_tree` disconnects `BossPhases.phase_changed`, base disconnects hitbox; `.uid` files present for new scripts.
+  - Lens 3 (signal decoupling): PASS — call down (`_weapon.hold_fire(delta)`, `set_fire_rate`), signal up (`phase_changed` child→parent, `Events.enemy_destroyed` emitted only in `_die()`); no `get_parent().get_parent()` chains; `bullet_fired` has no external listeners so once-per-burst emit is behavior-neutral.
+  - Lens 4 (ACs & GUT coverage): PASS — all 5 Given/When/Then ACs verified against code: gunship 380 > drone 240 speed, 620/480 standoff, fire_rate 2.0 > 1.2 × wave multiplier via `setup_wave`, 3-round 24° burst; boss BossPhases child with [1.0, 0.5] thresholds updated in `take_damage` before the death check; `is_boss` → raw `blast_damage` from charge_blast, 500 HP not one-shottable by 10-dmg shots, `enemy_destroyed('gunship'|'boss', pos, score)` only on death; `test_boss_phases.gd` covers all ACs incl. 52%/48%/exactly-50% phase transitions.
+  - Auto-patch (1 repair attempt): `boss.gd::_apply_phase()` indexed `phase_fire_rate_multipliers[rate_idx]` without a size guard (unlike the burst/spread arrays) — an emptied export array would cause an index-out-of-bounds; added `if phase_fire_rate_multipliers.size() > 0:` guard. Statically verified (bracket balance, tab indentation); no Godot binary in container per prior authorized fallback.
+  - Result: review PASSED, `status: 'done'`.
