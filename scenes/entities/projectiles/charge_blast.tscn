@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/entities/projectiles/charge_blast.gd" id="1_blast"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_blast"]
+size = Vector2(1920, 1080)
+
+[node name="ChargeBlast" type="Area2D"]
+collision_layer = 4
+collision_mask = 2
+monitoring = false
+visible = false
+script = ExtResource("1_blast")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_blast")
