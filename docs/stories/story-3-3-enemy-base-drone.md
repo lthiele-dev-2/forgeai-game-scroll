@@ -5,7 +5,7 @@ story_key: '3.3'
 forge_task_id: 'cmwm5qo5p002jistvcfhk5z0t'
 priority: 'HIGH'
 story_points: 5
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: '825e473c76cacaf9148293fb860b67073a627fde'
 ---
@@ -47,4 +47,15 @@ As a player, I want the first enemy type — a drone that approaches and fires a
   - `drone.gd` (Drone extends Enemy): `_physics_process(delta)` moves toward the player's x (`player` group or `set_target`) while `|dx| > @export attack_range`, decelerates to a stop in range, then `Weapon.hold_fire(delta)` fires at the wave-scaled `fire_rate` from `setup_wave`.
   - `drone.tscn`: Drone(CharacterBody2D) + CollisionShape2D + Sprite2D + Hitbox(Area2D, layer 2) + Weapon(Node2D)+Muzzle(Marker2D) per architecture §3.4.
   - `level_01.gd`: mech added to the `player` group so drones can resolve their target without cross-tree `get_node()`.
-  - `tests/test_enemy_base.gd`: scene-tree shape, setup_wave scaling, hitbox→take_damage, death signal + queue_free/pool release, approach-stop, fire-only-in-range, pool cap.
+   - `tests/test_enemy_base.gd`: scene-tree shape, setup_wave scaling, hitbox→take_damage, death signal + queue_free/pool release, approach-stop, fire-only-in-range, pool cap.
+ - **Review Report (bmgd-code-review, task cmwm5qo5p002jistvcfhk5z0t, 2026-11-19):**
+   - Diff inspected from `baseline_commit` 825e473 to HEAD on `feature/init/3-3-enemy-base-script-drone-enemy-cmwm5qo5` (7 files: enemy.gd, drone.gd, enemy_weapon.gd, drone.tscn, level_01.gd, test_enemy_base.gd, this story).
+   - Lens 1 (physics/frame budget): PASS. All motion in `_physics_process(delta)`; drone velocity set in px/s with `move_and_slide()` (delta applied internally), deceleration via `move_toward(..., deceleration * delta)`; no per-frame allocations on the hot path (group lookup per tick is bounded by the 24-enemy cap).
+   - Lens 2 (node lifecycle/memory): PASS. Death path emits `Events.enemy_destroyed` then `pool.release(self)` or `queue_free()` — never `free()` mid-frame; idempotent via `is_alive`; Hitbox signal disconnected in `_exit_tree` and re-connected with an `is_connected` guard on re-entry (pool re-acquire); weapon pool is a child node freed with the drone.
+   - Lens 3 (signal decoupling): PASS. Cross-scene traffic only via the `Events` autoload (`enemy_destroyed`, `enemy_spawned`); WaveSpawner connects in `_ready`/disconnects in `_exit_tree`; no `get_parent()` chains in the new code; player resolution via `player` group or `set_target` injection.
+   - Lens 4 (ACs & GUT): PASS. All five Given/When/Then ACs are implemented and covered by `tests/test_enemy_base.gd` (contract, tree shape per architecture §3.4, wave-scaled stats, hitbox→take_damage, idempotent death emission + queue_free/pool release, approach-stop, fire-only-in-range with leftward bullets at the muzzle, pool cap). Engine-run GUT remains pending a Linux Godot binary (recorded environment failure above); static verification PASS.
+   - Findings auto-patched (2, within the 3-attempt repair budget):
+     1. `drone.gd`: drone fired even when no player could be resolved (`in_range` defaulted to `true`); now `in_range` requires a resolved player, so a targetless drone stops instead of firing into the void.
+     2. `wave_spawner.gd._spawn_one`: the spawner acquired enemies from their `ObjectPool` but never assigned `enemy.pool`, so the pool-release death path was dead code in-game (always `queue_free`), and enemy weapons never received the level `Projectiles` container — bullets would have been parented under the moving drone once `enemy_bullet.tscn` lands (story 3.5). Now assigns `enemy.pool = pool` for `Enemy` instances and wires `Weapon.set_projectiles_container`/`set_level_bounds` via the new `projectiles_path` export (`^"../Projectiles"`), mirroring how `level_01.gd` wires the mech's weapon. Stub enemies in `test_wave_spawner.gd` are unaffected (`enemy is Enemy` guard, no `Weapon` child).
+   - Also added engine-style `.uid` files for `enemy.gd`, `drone.gd`, `enemy_weapon.gd` (matching the convention from story 3-2).
+   - Static re-check after patches (bracket balance, tab-only indentation): PASS. Review verdict: APPROVED, `status: 'done'`.

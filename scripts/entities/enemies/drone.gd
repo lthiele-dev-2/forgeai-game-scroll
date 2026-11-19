@@ -36,7 +36,7 @@ func _physics_process(delta: float) -> void:
 	if not is_alive:
 		return
 	var player: Node2D = _resolve_player()
-	var in_range: bool = true
+	var in_range: bool = player != null
 	if player != null:
 		var dx: float = player.global_position.x - global_position.x
 		if absf(dx) > attack_range:
