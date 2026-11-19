@@ -1,0 +1,7 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/enemy_stats.gd" id="1_stats"]
+
+[resource]
+script = ExtResource("1_stats")
+stats = {"drone": {"scene": "res://scenes/entities/enemies/drone.tscn", "hp": 30, "fire_rate": 1.2, "score": 100}, "gunship": {"scene": "res://scenes/entities/enemies/gunship.tscn", "hp": 60, "fire_rate": 2.0, "score": 250}, "boss": {"scene": "res://scenes/entities/enemies/boss.tscn", "hp": 500, "fire_rate": 1.0, "score": 1000}}
