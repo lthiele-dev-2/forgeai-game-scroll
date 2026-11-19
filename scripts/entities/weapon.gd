@@ -58,8 +58,12 @@ func _fire() -> void:
 	if _active_shots.size() >= pool_size:
 		var oldest: PlayerShot = _active_shots.pop_front()
 		oldest.release()
-	var shot: PlayerShot = pool.acquire() as PlayerShot
+	var acquired: Node = pool.acquire()
+	if acquired == null:
+		return
+	var shot: PlayerShot = acquired as PlayerShot
 	if shot == null:
+		pool.release(acquired)
 		return
 	var parent: Node = projectiles_container
 	if parent == null or not is_instance_valid(parent):

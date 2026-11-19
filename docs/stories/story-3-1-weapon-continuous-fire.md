@@ -5,7 +5,7 @@ story_key: '3.1'
 forge_task_id: 'cmwm5ppl9002gistvndcu3iuw'
 priority: 'HIGH'
 story_points: 5
-status: 'in-review'
+status: 'done'
 engine: 'godot-4'
 baseline_commit: 'bf1f986e25315871de51e828c0fca1457688e408'
 ---
@@ -37,6 +37,14 @@ As a player, I want to hold the fire button and shoot a steady stream of project
 - [x] Verify headless with `godot --headless --check-only` and run GUT
 
 ## Dev Agent Record
+- **Review Record (bmgd-code-review, task cmwm5ppl9002gistvndcu3iuw):**
+  - Diff inspected: `git diff bf1f986e25315871de51e828c0fca1457688e408..HEAD` on `feature/init/3-1-weapon-continuous-fire-pooled-player-shots-cmwm5ppl` (11 files, +386/-8): `weapon.gd`, `player_shot.gd`/`.tscn`, `mech.gd`/`.tscn`, `level_01.gd`, `test_weapon.gd`.
+  - Lens 1 (physics & frame budget): PASS. All motion in `_physics_process(delta)` scaled by `delta` (`global_position += direction * speed * delta`); fire cooldown delta-scaled with remainder preserved (`_cooldown += 1.0 / fire_rate`); no per-frame allocations on the hot path; `instantiate()` only inside `ObjectPool`, capped at `pool_size` = 64 per `docs/architecture.md` §6.
+  - Lens 2 (node lifecycle & memory): PASS after 1 auto-patch. No `free()` mid-frame anywhere; pool release reparents under `ShotPool` with `PROCESS_MODE_DISABLED`. Patch: `player_shot.release()` now sets `monitoring = false` so up to 64 parked shots stop participating in physics overlap queries; `weapon._fire()` re-releases the acquired node if `projectile_scene` ever yields a non-`PlayerShot` (previously leaked it outside the tree).
+  - Lens 3 (signal decoupling): PASS. Call Down, Signal Up: `mech._physics_process` -> `weapon.hold_fire(delta)`; `weapon.shot_fired` -> `mech._on_weapon_shot_fired` -> `Events.shot_fired` (autoload, registered in `project.godot`); disconnects in `_exit_tree()` on both ends; `_on_area_entered` uses a single-level `area.get_parent()` guarded by `has_method("take_damage")` — no brittle multi-level chains.
+  - Lens 4 (ACs & GUT): PASS. All 6 Given/When/Then ACs implemented and covered by `tests/test_weapon.gd` (11 tests: fire-rate timing 60/30 Hz with immediate first shot, muzzle spawn position, `shot_fired` -> Events relay via mech scene, rightward delta movement, out-of-bounds pool release, damage = `base_damage * enemy_multiplier`, pool-cap oldest-release reuse). godot-verify recorded 62/62 GUT tests green (332 asserts) on this diff.
+  - Verification note: no `godot` binary in this review container, so patches were verified by static inspection only; `bmgd-merge` re-runs headless Godot checks. `repair_attempts`: 1 (within max 3). Patches are behavior-preserving for the green suite (no test asserts `monitoring`; the hit test emits `area_entered` manually, which works regardless of `monitoring`).
+  - Status set to `done`.
 - **Verify Record (godot-verify, task cmwm5ppl9002gistvndcu3iuw):**
   - Environment: no `godot` binary in the container. Human resume answer: Godot binary is 4.7.2 (`C:\dev\apps\godot\4.7.2` on the human's Windows host, not mounted in this Linux container); provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary instead (`godot --version` -> `4.7.2.stable.official.ed1daf0bf`). GUT 9.7.1 at `addons/gut/gut_cmdln.gd`; 9 test scripts in `tests/`.
   - `godot --headless --import` -> exit 0 (all `.tscn`/`.tres` parse and import cleanly).

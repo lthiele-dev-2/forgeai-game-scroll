@@ -40,6 +40,7 @@ func release() -> void:
 	if not is_active:
 		return
 	is_active = false
+	monitoring = false
 	if pool != null and is_instance_valid(pool):
 		pool.release(self)
 	returned_to_pool.emit(self)
