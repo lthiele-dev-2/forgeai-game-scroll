@@ -171,7 +171,7 @@ func test_mech_scene_has_weapon_child_and_relays_shot_fired_to_events() -> void:
 	Input.action_press("shoot")
 	mech._physics_process(DELTA)
 	Input.action_release("shoot")
-	assert_signal_emitted_with_parameters(Events, "shot_fired", [mech.weapon.muzzle.global_position], "Weapon -> Mech -> Events relay")
+	assert_signal_emitted_with_parameters(Events, "shot_fired", [mech.weapon.muzzle.global_position], -1)
 	assert_eq(mech_container.get_child_count(), 1, "holding shoot in mech._physics_process fires a pooled shot")
 	mech_container.queue_free()
 	mech.queue_free()

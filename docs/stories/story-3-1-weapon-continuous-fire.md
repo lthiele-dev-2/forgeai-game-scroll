@@ -5,7 +5,7 @@ story_key: '3.1'
 forge_task_id: 'cmwm5ppl9002gistvndcu3iuw'
 priority: 'HIGH'
 story_points: 5
-status: 'in-progress'
+status: 'in-review'
 engine: 'godot-4'
 baseline_commit: 'bf1f986e25315871de51e828c0fca1457688e408'
 ---
@@ -37,6 +37,14 @@ As a player, I want to hold the fire button and shoot a steady stream of project
 - [x] Verify headless with `godot --headless --check-only` and run GUT
 
 ## Dev Agent Record
+- **Verify Record (godot-verify, task cmwm5ppl9002gistvndcu3iuw):**
+  - Environment: no `godot` binary in the container. Human resume answer: Godot binary is 4.7.2 (`C:\dev\apps\godot\4.7.2` on the human's Windows host, not mounted in this Linux container); provisioned the official `Godot_v4.7.2-stable_linux.x86_64` headless binary instead (`godot --version` -> `4.7.2.stable.official.ed1daf0bf`). GUT 9.7.1 at `addons/gut/gut_cmdln.gd`; 9 test scripts in `tests/`.
+  - `godot --headless --import` -> exit 0 (all `.tscn`/`.tres` parse and import cleanly).
+  - `godot --headless --check-only -s <script>` for every `scripts/**/*.gd` and `tests/**/*.gd`: no parse/syntax errors (only expected autoload-resolution noise when compiling outside the project tree; `addons/gut/version_numbers.gd` standalone check fails in GUT's own `utils.gd` static initializer, a third-party artifact, not project code).
+  - `godot --headless --quit-after 5` (main scene `res://scenes/main.tscn` smoke load) -> exit 0, no script errors.
+  - GUT (`godot --headless -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -gexit`): **62/62 tests passed, 332 asserts, exit 0.** Includes all 11 `test_weapon.gd` tests (fire-rate timing, muzzle spawn, `shot_fired` -> Events relay, rightward delta movement, out-of-bounds pool release, enemy-hit damage formula, pool-cap reuse, mech scene wiring).
+  - `repair_attempts`: 2 (within the max-3 bound). Attempt 1: `test_weapon.gd:174` passed the message text as the 4th arg of `assert_signal_emitted_with_parameters`, which GUT 9.7.1 treats as the emission index (`String == int` engine error, params resolved to null). Attempt 2: removed the text arg and passed index `-1` explicitly -> parse-clean and green. No assertions were weakened; the implementation was correct, the test call signature was wrong.
+  - Status set to `in-review`.
 - **Debug Log:**
   - No Godot binary exists in the dev container (`godot: command not found`); headless syntax check + GUT run are delegated to the `godot-verify` board column, which owns that gate.
   - **godot-verify probe (task cmwm5ppl9002gistvndcu3iuw):** `godot --version` -> `/usr/bin/bash: line 1: godot: command not found` (exit 127); `which godot godot4` -> not found; exhaustive `find / -xdev -maxdepth 7 -type f -iname "godot*" -perm -u+x` -> no binary anywhere in the container. `addons/gut/gut_cmdln.gd`, `tests/` (incl. `test_weapon.gd`), and `project.godot` are present. Environment failure path: `forge_ask_human` called to decide static fallback vs. waiting for environment fix.
