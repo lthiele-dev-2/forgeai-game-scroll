@@ -5,9 +5,9 @@ story_key: '3.3'
 forge_task_id: 'cmwm5qo5p002jistvcfhk5z0t'
 priority: 'HIGH'
 story_points: 5
-status: 'ready-for-dev'
+status: 'in-progress'
 engine: 'godot-4'
-baseline_commit: ''
+baseline_commit: '825e473c76cacaf9148293fb860b67073a627fde'
 ---
 
 # Story [3.3]: Enemy Base Script & Drone Enemy
@@ -28,11 +28,18 @@ As a player, I want the first enemy type — a drone that approaches and fires a
 - `res://tests/test_enemy_base.gd` — GUT tests
 
 ## Tasks & Subtasks
-- [ ] `res://scripts/entities/enemies/enemy.gd` — base enemy with damage/death
-- [ ] `res://scenes/entities/enemies/drone.tscn` + `drone.gd` — drone scene + AI
-- [ ] `res://tests/test_enemy_base.gd` — GUT tests
-- [ ] Verify headless with `godot --headless --check-only` and run GUT
+- [x] `res://scripts/entities/enemies/enemy.gd` — base enemy with damage/death
+- [x] `res://scenes/entities/enemies/drone.tscn` + `drone.gd` — drone scene + AI
+- [x] `res://tests/test_enemy_base.gd` — GUT tests
+- [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to the `godot-verify` board column, which owns the headless binary)
 
 ## Dev Agent Record
 - **Debug Log:**
+  - No Godot binary in the dev container; headless check + GUT run happen in the `godot-verify` column.
 - **Completion Notes:**
+  - `enemy.gd` (Enemy, CharacterBody2D): `hp`/`max_hp`, `take_damage(amount)`, `setup_wave(type, hp, fire_rate, score)` for the WaveSpawner, `enemy_multiplier` for PlayerShot's damage call, Hitbox `area_entered` wired in `_ready` (area `damage` property else `contact_damage`), death emits `Events.enemy_destroyed(enemy_type, global_position, score_value)` then `pool.release(self)` when a pool is set, else `queue_free()` — never `free()` mid-frame; death is idempotent via `is_alive`.
+  - `enemy_weapon.gd` (EnemyWeapon, Node2D): pooled bullet firing at `fire_rate` toward `Vector2.LEFT` from `Muzzle`, `@export bullet_scene` (injectable; drone auto-loads `enemy_bullet.tscn` once story 3.5 lands it), active-bullet cap via `pool_size`, `bullet_fired` signal up.
+  - `drone.gd` (Drone extends Enemy): `_physics_process(delta)` moves toward the player's x (`player` group or `set_target`) while `|dx| > @export attack_range`, decelerates to a stop in range, then `Weapon.hold_fire(delta)` fires at the wave-scaled `fire_rate` from `setup_wave`.
+  - `drone.tscn`: Drone(CharacterBody2D) + CollisionShape2D + Sprite2D + Hitbox(Area2D, layer 2) + Weapon(Node2D)+Muzzle(Marker2D) per architecture §3.4.
+  - `level_01.gd`: mech added to the `player` group so drones can resolve their target without cross-tree `get_node()`.
+  - `tests/test_enemy_base.gd`: scene-tree shape, setup_wave scaling, hitbox→take_damage, death signal + queue_free/pool release, approach-stop, fire-only-in-range, pool cap.
