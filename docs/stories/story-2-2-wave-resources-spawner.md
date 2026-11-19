@@ -37,6 +37,10 @@ As a player, I want escalating enemy waves that spawn sequentially along the lev
 - [x] Verify headless with `godot --headless --check-only` and run GUT (deferred to `godot-verify` column)
 
 ## Dev Agent Record
+- **Verify Environment Failure (godot-verify, attempt 2):**
+  - `godot --version` -> `/usr/bin/bash: line 1: godot: command not found`; full filesystem search (`find / -xdev -iname "*godot*"`) found no Godot 4.x binary in the container; no `## Human Interaction Resume` authorizing static fallback was present.
+  - GUT framework present (`addons/gut/gut_cmdln.gd`) and tests present (`tests/test_wave_spawner.gd` etc.), but cannot be executed without the `godot` binary.
+  - `forge_ask_human` called on task cmwm5omym002cistvxds9m2d8: proceed with static GDScript/scene verification, or wait for environment fix.
 - **Debug Log:**
   - `WaveSpawner` is generic over `WaveData`/`EnemyStats`; enemy `PackedScene`s resolve lazily from `enemy_stats.tres` scene paths, with `scene_overrides` as the test seam (enemy scenes land in Epic 3 per readiness-report observation 1).
   - Alive counting: `_alive` array pruned by `is_instance_valid` in `_physics_process`, plus one pop per `Events.enemy_destroyed` so pool-released enemies count as destroyed; `wave_cleared` guarded by `_cleared_emitted` + `_cleared_waves`.
